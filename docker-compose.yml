@@ -1,0 +1,55 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m api.app
+    environment:
+      AS_OF: "2026-11-25"
+      DEVISE: XOF
+      ARRONDI: DEMI_VERS_LE_HAUT
+      GRAINE_DEMO: "20261125"
+      FUSEAU: Africa/Porto-Novo
+      AI_BACKEND: demo
+      AI_TIMEOUT_S: "8"
+      WEMA_DB: /app/data/wema.db
+      WEMA_DATA: /app/data
+    ports:
+      - "8000:8000"
+    volumes:
+      - wema-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m worker.run --loop
+    environment:
+      AS_OF: "2026-11-25"
+      AI_BACKEND: demo
+      WEMA_DB: /app/data/wema.db
+      WEMA_DATA: /app/data
+    volumes:
+      - wema-data:/app/data
+    depends_on:
+      api:
+        condition: service_healthy
+
+  web:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web:/app
+
+volumes:
+  wema-data:

@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Donnees generees par make seed (reproductibles, non versionnees)
+data/
+seeds/generated/
+
+# Frontend
+web/node_modules/
+web/dist/
+web/.vite/
+
+# Editeurs / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Rapports generes
+*.log
+.coverage
+htmlcov/

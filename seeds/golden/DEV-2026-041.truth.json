@@ -1,0 +1,16 @@
+{
+  "reference": "DEV-2026-041",
+  "document_type": "devis",
+  "date": "2026-11-18",
+  "client": {"name": "Ets Sossa Materiaux", "ifu": null, "missing": ["ifu"]},
+  "lines": [
+    {"line_no": 1, "description": "Banquette 3 places", "quantity": "4", "unit": "pcs", "unit_price_ht": 185000, "tax_rate": 18, "line_total_ht": 740000},
+    {"line_no": 2, "description": "Table basse chêne", "quantity": "2", "unit": "pcs", "unit_price_ht": 120000, "tax_rate": 18, "line_total_ht": 240000},
+    {"line_no": 3, "description": "Livraison et installation", "quantity": "1", "unit": "forfait", "unit_price_ht": 60000, "tax_rate": 18, "line_total_ht": 60000}
+  ],
+  "printed_totals": {"ht": 1020000, "vat": 183600, "ttc": 1203600},
+  "recalculated_totals": {"ht": 1040000, "vat": 187200, "ttc": 1227200},
+  "expected_ecart": {"ht": 20000, "vat": 3600, "ttc": 23600},
+  "delivery": {"1": "4", "2": "2", "3": "0", "missing_line": 3},
+  "notes": "IFU absent du devis, retrouve ensuite dans le referentiel ; ligne installation non livree."
+}
