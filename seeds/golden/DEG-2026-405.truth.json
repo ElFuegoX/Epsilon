@@ -1,4 +1,5 @@
 {
+  "canal": "whatsapp",
   "client": {
     "ifu": null,
     "missing": [
@@ -8,10 +9,6 @@
   },
   "date": "2026-11-21",
   "degradation": "ombre",
-  "delivery": {
-    "1": "3",
-    "2": "5"
-  },
   "document_type": "devis",
   "expected_ecart": {
     "ht": 20000,
@@ -36,23 +33,21 @@
   ],
   "lines": [
     {
-      "delivered": "3",
       "description": "Article mobilier 001",
       "discount": 0,
       "line_no": 1,
-      "line_total_ht": 576000,
-      "quantity": "3",
+      "line_total_ht": 192000,
+      "quantity": "1",
       "tax_rate": 18,
       "unit": "pcs",
       "unit_price_ht": 192000
     },
     {
-      "delivered": "5",
       "description": "Article menuiserie 008",
       "discount": 0,
       "line_no": 2,
-      "line_total_ht": 875000,
-      "quantity": "5",
+      "line_total_ht": 700000,
+      "quantity": "4",
       "tax_rate": 18,
       "unit": "jour",
       "unit_price_ht": 175000
@@ -64,21 +59,20 @@
     "payment_terms.text",
     "payment_terms.days"
   ],
-  "missing_line": null,
-  "notes": "Cas degrade : ombre. La verite terrain reste celle de la piece imprimee.",
+  "notes": "Photo degradee : ombre. La verite terrain reste celle de la piece imprimee.",
   "printed_totals": {
-    "ht": 1431900,
+    "ht": 872000,
     "ttc": null,
     "vat": null
   },
   "quality": "degraded",
   "recalculated_totals": {
-    "ht": 1451000,
-    "ttc": 1712180,
-    "vat": 261180
+    "ht": 892000,
+    "ttc": 1052560,
+    "vat": 160560
   },
   "reference": "DEG-2026-405",
-  "sha256": "b8ed725b47832bc65545c3debb84da3f758cdad7c1b3447ea47a17ad76d7e771",
-  "source_file": "seeds/generated/eval/degrades/DEG-2026-405.pdf",
+  "sha256": "943e8203a2059d2aa7dfecc960b0d6c42208e7f99ccae51194d6c8f1cf9b152d",
+  "source_file": "seeds/generated/eval/degrades/DEG-2026-405.png",
   "split": "test"
 }

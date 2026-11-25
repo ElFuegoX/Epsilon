@@ -1,4 +1,5 @@
 {
+  "canal": "whatsapp",
   "client": {
     "ifu": "9968862085",
     "missing": [],
@@ -6,11 +7,6 @@
   },
   "date": "2026-11-22",
   "degradation": "rotation",
-  "delivery": {
-    "1": "1",
-    "2": "4",
-    "3": "2"
-  },
   "document_type": "devis",
   "expected_ecart": {
     "ht": 0,
@@ -32,34 +28,31 @@
   "injected_anomalies": [],
   "lines": [
     {
-      "delivered": "1",
       "description": "Article mobilier 001",
       "discount": 0,
       "line_no": 1,
-      "line_total_ht": 192000,
-      "quantity": "1",
+      "line_total_ht": 576000,
+      "quantity": "3",
       "tax_rate": 18,
       "unit": "pcs",
       "unit_price_ht": 192000
     },
     {
-      "delivered": "4",
       "description": "Article menuiserie 008",
       "discount": 0,
       "line_no": 2,
-      "line_total_ht": 700000,
-      "quantity": "4",
+      "line_total_ht": 525000,
+      "quantity": "3",
       "tax_rate": 18,
       "unit": "jour",
       "unit_price_ht": 175000
     },
     {
-      "delivered": "2",
       "description": "Article livraison 015",
       "discount": 0,
       "line_no": 3,
-      "line_total_ht": 292000,
-      "quantity": "2",
+      "line_total_ht": 146000,
+      "quantity": "1",
       "tax_rate": 18,
       "unit": "m²",
       "unit_price_ht": 146000
@@ -70,21 +63,20 @@
     "payment_terms.text",
     "payment_terms.days"
   ],
-  "missing_line": null,
-  "notes": "Cas degrade : rotation. La verite terrain reste celle de la piece imprimee.",
+  "notes": "Photo degradee : rotation. La verite terrain reste celle de la piece imprimee.",
   "printed_totals": {
-    "ht": 1184000,
+    "ht": 1247000,
     "ttc": null,
     "vat": null
   },
   "quality": "degraded",
   "recalculated_totals": {
-    "ht": 1184000,
-    "ttc": 1397120,
-    "vat": 213120
+    "ht": 1247000,
+    "ttc": 1471460,
+    "vat": 224460
   },
   "reference": "DEG-2026-404",
-  "sha256": "f335036f970998af5b93131b65815d8afe31886ec9d265a2e280ed48fc9ee948",
-  "source_file": "seeds/generated/eval/degrades/DEG-2026-404.pdf",
+  "sha256": "6eb26964f0370488b14fd713f696d23af4f0a13e7b38b20b1e7b91079d86ee7e",
+  "source_file": "seeds/generated/eval/degrades/DEG-2026-404.png",
   "split": "validation"
 }

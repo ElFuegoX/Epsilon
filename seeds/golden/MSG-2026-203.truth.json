@@ -1,4 +1,5 @@
 {
+  "canal": "whatsapp",
   "client": {
     "ifu": null,
     "missing": [
@@ -31,7 +32,6 @@
   ],
   "lines": [
     {
-      "delivered": "3",
       "description": "Article mobilier 001",
       "discount": 0,
       "line_no": 1,
@@ -61,7 +61,7 @@
     "vat": 103680
   },
   "reference": "MSG-2026-203",
-  "sha256": "72bb49bddcaebd7f0d6527708d7b7955ee531b133505d491d76c0fb14a85dbb1",
+  "sha256": "6af564bdf8034067f1017a5da97ae96ab2bebd28d6be2a212a530d74cafaceb5",
   "source_file": "seeds/generated/demo/messages/MSG-2026-203.txt",
   "split": "dev"
 }

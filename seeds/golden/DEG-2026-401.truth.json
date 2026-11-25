@@ -1,4 +1,5 @@
 {
+  "canal": "whatsapp",
   "client": {
     "ifu": "9969154888",
     "missing": [],
@@ -6,10 +7,6 @@
   },
   "date": "2026-11-25",
   "degradation": "rotation",
-  "delivery": {
-    "1": "3",
-    "2": "3"
-  },
   "document_type": "devis",
   "expected_ecart": {
     "ht": 20000,
@@ -33,7 +30,6 @@
   ],
   "lines": [
     {
-      "delivered": "3",
       "description": "Article mobilier 001",
       "discount": 0,
       "line_no": 1,
@@ -44,7 +40,6 @@
       "unit_price_ht": 192000
     },
     {
-      "delivered": "3",
       "description": "Article menuiserie 008",
       "discount": 0,
       "line_no": 2,
@@ -60,8 +55,7 @@
     "payment_terms.text",
     "payment_terms.days"
   ],
-  "missing_line": null,
-  "notes": "Cas degrade : rotation. La verite terrain reste celle de la piece imprimee.",
+  "notes": "Photo degradee : rotation. La verite terrain reste celle de la piece imprimee.",
   "printed_totals": {
     "ht": 1081000,
     "ttc": null,
@@ -74,7 +68,7 @@
     "vat": 198180
   },
   "reference": "DEG-2026-401",
-  "sha256": "dc71755a728e06f6dd351c05fee56d188d38d596a7ce329988415938f5bc2da0",
-  "source_file": "seeds/generated/eval/degrades/DEG-2026-401.pdf",
+  "sha256": "784927aeae70d65137e268e9e63e7ea2e0c4544217deb9488623748c5114efab",
+  "source_file": "seeds/generated/eval/degrades/DEG-2026-401.png",
   "split": "dev"
 }

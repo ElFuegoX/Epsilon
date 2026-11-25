@@ -1,4 +1,5 @@
 {
+  "canal": "whatsapp",
   "client": {
     "ifu": "9982276074",
     "missing": [],
@@ -6,10 +7,6 @@
   },
   "date": "2026-11-17",
   "degradation": "tampon",
-  "delivery": {
-    "1": "1",
-    "2": "2"
-  },
   "document_type": "devis",
   "expected_ecart": {
     "ht": 20000,
@@ -33,7 +30,6 @@
   ],
   "lines": [
     {
-      "delivered": "1",
       "description": "Article mobilier 001",
       "discount": 0,
       "line_no": 1,
@@ -44,7 +40,6 @@
       "unit_price_ht": 192000
     },
     {
-      "delivered": "2",
       "description": "Article menuiserie 008",
       "discount": 0,
       "line_no": 2,
@@ -60,8 +55,7 @@
     "payment_terms.text",
     "payment_terms.days"
   ],
-  "missing_line": null,
-  "notes": "Cas degrade : tampon. La verite terrain reste celle de la piece imprimee.",
+  "notes": "Photo degradee : tampon. La verite terrain reste celle de la piece imprimee.",
   "printed_totals": {
     "ht": 522000,
     "ttc": null,
@@ -74,7 +68,7 @@
     "vat": 97560
   },
   "reference": "DEG-2026-409",
-  "sha256": "073330c31ca7960b4584ae17c448ff87de16812200db599812cc09f7fab2686d",
-  "source_file": "seeds/generated/eval/degrades/DEG-2026-409.pdf",
+  "sha256": "a404456b9c1a873536580097afca6b5e41cbc16797751f0774c61372b078e639",
+  "source_file": "seeds/generated/eval/degrades/DEG-2026-409.png",
   "split": "validation"
 }

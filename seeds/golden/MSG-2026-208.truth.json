@@ -1,4 +1,5 @@
 {
+  "canal": "whatsapp",
   "client": {
     "ifu": null,
     "missing": [
@@ -31,7 +32,6 @@
   ],
   "lines": [
     {
-      "delivered": "4",
       "description": "Article mobilier 001",
       "discount": 0,
       "line_no": 1,
@@ -42,7 +42,6 @@
       "unit_price_ht": 192000
     },
     {
-      "delivered": "1",
       "description": "Article menuiserie 008",
       "discount": 0,
       "line_no": 2,
@@ -72,7 +71,7 @@
     "vat": 169740
   },
   "reference": "MSG-2026-208",
-  "sha256": "188852a6d1f94364500846c3e59a6294eb499013b271869667d7c77520bccee2",
+  "sha256": "b26e83fbc4695b65d813477b1dd2d54e5c30e33e80ee9970e07644b54c3c71f5",
   "source_file": "seeds/generated/demo/messages/MSG-2026-208.txt",
   "split": "dev"
 }

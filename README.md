@@ -78,8 +78,10 @@ Epsilon/                          racine du dépôt, on travaille toujours ici
 ├── web/          React, visionneuse PDF, 10 écrans
 ├── seeds/        pièces et vérité terrain
 ├── tests/        calcul, concurrence, immuabilité, extraction
-└── docs/         blueprint, rapport, fiche IA, recette, API, décisions
+└── docs/         blueprint, rapport, fiche IA, extraction, recette, API, décisions
 ```
+
+Pipeline d'extraction (corpus, OCR, cache, contrat JSON, intégration) : voir [`docs/EXTRACTION.md`](docs/EXTRACTION.md).
 
 Les sous-dossiers du backend sont directement à la racine : il n'y a plus de dossier `wema/`.
 Les imports se font donc en absolu (`from config import settings`, `from db import transaction`, `from adapters.pdf import ...`).

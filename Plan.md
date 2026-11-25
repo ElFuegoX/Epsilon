@@ -100,15 +100,20 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 4. **Adaptateurs d'entrée** (`adapters/ocr.py`, `adapters/llm.py`) : mode `AI_BACKEND=demo` déterministe, hors ligne, sans clé ; variantes `cpu` et `cloud` derrière le même contrat.
 5. **Règle d'or** : champ absent = `null` + `ABSENT_DE_LA_PIECE`. Aucun IFU, aucune échéance, aucun montant « probable ». Les `bbox` sont émises en pourcentage `{x, y, w, h}`, avec `bbox_px` optionnel côté OCR uniquement ; `docs/API.md` reste la propriété de Melon.
 6. **Mesures** (`domain/metrics.py`, `tests/test_extraction.py`, `tests/test_ia_avancee.py`, `docs/FICHE_IA.md`) : exactitude par champ, F1 des lignes, exactitude des totaux imprimés extraits, STP, rappel des anomalies injectées ; analyser les 30 premiers points d'attention (écarts réels puis alertes de confiance) et publier les chiffres **observés**, y compris les classes faibles.
+Documentation technique complète : **[`docs/EXTRACTION.md`](docs/EXTRACTION.md)** (pipeline, cache OCR, contrat JSON, intégration Melon/Jean-Marie/Larissa).
+
 7. **Briques optionnelles** (`domain/jev.py`, `domain/semantic.py`, `adapters/constraints.py`, hooks dans `ocr.py`/`llm.py`) : `Choice`/`Noul`/`Score`, BM25 + lexique métier + RRF, validation/réparation de schéma et `logprobs`. Aucun modèle lourd n'est téléchargé : les backends s'activent par variables d'environnement et échouent explicitement s'ils sont absents. **Audio/Whisper écarté** : seuls PDF, photos, texte scanné et messages WhatsApp/texte sont traités.
 
 ### Definition of done — Freud
-- [x] `python -m seed --as-of 2026-11-25` produit 120 documents annotés et le split 72/24/24 ; empreinte `2414ff0cf0acafaf6b5ff13b4efa6f09636cba8a45c3346fe79efd5f0062debd`.
+- [x] `python -m seed --as-of 2026-11-25` produit 120 documents annotés et le split 72/24/24 ; empreinte `7713f888568e6bd7e4a57dbd364ea3e27d7405d4c4e1e328218c5c8932cc6d20` (rendu v2 : colonnes, photos simulées).
 - [x] Toute valeur extraite non nulle porte page + bbox + méthode ; tout champ absent porte `ABSENT_DE_LA_PIECE`.
 - [x] Le test « zéro valeur inventée » passe sur l'IFU et l'échéance (`python -m unittest discover -s tests -t . -v`, 44 tests au vert dont 21 tests des briques optionnelles).
 - [x] Les hooks optionnels ne changent pas le contrat : `demo` reste hors ligne, un backend demandé mais absent lève une exception, et des `logprobs` absents ne sont jamais remplacés par une valeur par défaut.
 - [x] Le mode `demo` rejoue le même document avec le même résultat, sans réseau ; `cloud` sans `WEMA_LLM_URL` lève une exception au lieu d'inventer.
-- [x] La matrice de confusion et la fiche IA contiennent des mesures réelles (`seeds/generated/metrics.json`), pas les cibles du blueprint.
+- [x] L'extraction lit la pièce elle-même (pdfplumber pour les PDF, EasyOCR ou son cache pour les photos) et **jamais** la vérité du générateur ; les anciennes mesures (100 %) relisaient les blocs du générateur et sont retirées.
+- [x] `python -m seed --reset` charge la base (référentiels, 60 factures, 9 avoirs, 18 paiements, 96 pièces) ; `persister()` écrit `extracted_fields` aux chemins lus par `controls`.
+- [x] Cache EasyOCR complet (40 images, `seeds/ocr_cache/`) ; fiche IA réécrite avec la chaîne réelle : en-tête 96,4 %, F1 lignes 0,959, STP 69,2 %, 0 valeur inventée ; photos = classe faible (STP 6,7 %). Ablation « texte parfait » : 100 %.
+- [ ] Dockerfile : `COPY seeds ./seeds` à ajouter par Melon (cache OCR et vérités terrain dans l'image).
 - [ ] Relecture humaine de la vérité terrain par Larissa (à faire ; la graine ne remplace pas une validation humaine).
 
 ---

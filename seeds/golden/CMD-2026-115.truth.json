@@ -1,4 +1,5 @@
 {
+  "canal": "whatsapp",
   "client": {
     "ifu": "9969154888",
     "missing": [],
@@ -27,7 +28,6 @@
   "injected_anomalies": [],
   "lines": [
     {
-      "delivered": "2",
       "description": "Article mobilier 001",
       "discount": 0,
       "line_no": 1,
@@ -38,7 +38,6 @@
       "unit_price_ht": 192000
     },
     {
-      "delivered": "1",
       "description": "Article menuiserie 008",
       "discount": 0,
       "line_no": 2,
@@ -54,7 +53,7 @@
     "payment_terms.text",
     "payment_terms.days"
   ],
-  "notes": "Photo de commande synthetique, lecture OCR locale.",
+  "notes": "Photo de bon de commande : perspective, lumière et grain simulés.",
   "printed_totals": {
     "ht": 559000,
     "ttc": null,
@@ -67,7 +66,7 @@
     "vat": 100620
   },
   "reference": "CMD-2026-115",
-  "sha256": "5934779020a2ce5bca2b90b981ef4fbdb25a2e38dff5b1ea5c89b2f3fb1edace",
+  "sha256": "888190e5a5fe0a8bbc2f720d96272903207d286688113053e011555f71b396dc",
   "source_file": "seeds/generated/demo/photos/CMD-2026-115.png",
   "split": "test"
 }

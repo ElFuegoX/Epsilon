@@ -1,4 +1,5 @@
 {
+  "canal": "email",
   "client": {
     "ifu": "9970755585",
     "missing": [],
@@ -82,7 +83,7 @@
     "vat": 356580
   },
   "reference": "DEV-2026-001",
-  "sha256": "24275c4a777ebc278687cc1f186ca5cde7b7286e48c6ed26746e6c1f56c22b72",
+  "sha256": "6238b2116a1bf62e8ffe51249a23448a02767838791ef371efc590c8e99b001b",
   "source_file": "seeds/generated/demo/devis/DEV-2026-001.pdf",
   "split": "dev"
 }

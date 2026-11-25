@@ -9,6 +9,7 @@ Commande : ``python -m domain.metrics`` (écrit ``seeds/generated/metrics.json``
 from __future__ import annotations
 
 import argparse
+import sys
 import json
 from collections import Counter
 from decimal import Decimal
@@ -119,9 +120,11 @@ def _cueils_anomalies(truth: Mapping[str, Any], payload: Mapping[str, Any]) -> s
 
 
 def evaluer(dossier: Path | None = None, backend: str = "demo",
-            ecrire: bool = True) -> dict[str, Any]:
+            ecrire: bool = True, ocr_backend: str = "auto", split: str | None = None) -> dict[str, Any]:
     """Exécute l'extraction sur tout le corpus annoté et calcule les mesures."""
     truths = charger_truths(dossier)
+    if split:
+        truths = [t for t in truths if t.get("split") == split]
     if not truths:
         raise RuntimeError("aucune vérité terrain trouvée : lancer `python -m seed`")
 
@@ -140,10 +143,16 @@ def evaluer(dossier: Path | None = None, backend: str = "demo",
     confusion: Counter[tuple[str, str]] = Counter()
     erreurs: list[dict[str, Any]] = []
     confiances_basses: list[dict[str, Any]] = []
+    familles: dict[str, dict[str, int]] = {}
 
     for truth in truths:
         chemin = RACINE / truth["source_file"]
-        payload = extraction.extraire_piece(chemin, backend=backend)
+        payload = extraction.extraire_piece(chemin, backend=backend, ocr_backend=ocr_backend)
+        famille = familles.setdefault(truth.get("family", truth["document_type"]), {
+            "documents": 0, "champs_bons": 0, "champs_total": 0, "tp": 0, "fp": 0, "fn": 0, "stp": 0,
+        })
+        famille["documents"] += 1
+        stp_avant = stp
         confusion[(truth["document_type"], payload["document_type"])] += 1
 
         for nom in CHAMPS_EN_TETE:
@@ -152,6 +161,8 @@ def evaluer(dossier: Path | None = None, backend: str = "demo",
             bon = egal(attendu, observe)
             champs_bons += int(bon)
             champs_total += 1
+            famille["champs_bons"] += int(bon)
+            famille["champs_total"] += 1
             par_champ[nom]["bons"] += int(bon)
             par_champ[nom]["total"] += 1
             if not bon:
@@ -188,6 +199,9 @@ def evaluer(dossier: Path | None = None, backend: str = "demo",
         tp += tp_doc
         fn += fn_doc
         fp += fp_doc
+        famille["tp"] += tp_doc
+        famille["fn"] += fn_doc
+        famille["fp"] += fp_doc
         if fn_doc:
             erreurs.append(_erreur(truth, "lines", len(attendus), len(observes), None, "ligne_manquante"))
         if fp_doc:
@@ -223,6 +237,7 @@ def evaluer(dossier: Path | None = None, backend: str = "demo",
         )
         if type_ok and champs_doc_ok and lignes_doc_ok and totaux_doc_ok and not critique_revue:
             stp += 1
+        famille["stp"] += stp - stp_avant
 
     precision = tp / (tp + fp) if tp + fp else 0.0
     rappel = tp / (tp + fn) if tp + fn else 0.0
@@ -244,6 +259,9 @@ def evaluer(dossier: Path | None = None, backend: str = "demo",
     resultat = {
         "modele": extraction.MODELE_DEMO,
         "backend": backend,
+        "ocr": ocr_backend,
+        "jeu": split or "tous",
+        "chaine": "texte parfait (ablation)" if ocr_backend == "rendu" else "chaine reelle (pdfplumber + EasyOCR)",
         "as_of": settings.as_of,
         "graine": settings.graine_demo,
         "documents": len(truths),
@@ -265,6 +283,10 @@ def evaluer(dossier: Path | None = None, backend: str = "demo",
         "matrice_confusion": matrice,
         "erreurs_analysees": erreurs_triees,
         "erreurs_brutes": len(erreurs) + len(confiances_basses),
+        "erreurs_par_categorie": dict(sorted(Counter(e["categorie"] for e in erreurs).items())),
+        "erreurs_par_champ": dict(sorted(Counter(e["champ"] for e in erreurs).items())),
+        "alertes_confiance": len(confiances_basses),
+        "par_famille": {nom: _resume_famille(f) for nom, f in sorted(familles.items())},
     }
     if ecrire and dossier is None:
         SORTIE.parent.mkdir(parents=True, exist_ok=True)
@@ -273,6 +295,17 @@ def evaluer(dossier: Path | None = None, backend: str = "demo",
             encoding="utf-8",
         )
     return resultat
+
+
+def _resume_famille(f: Mapping[str, int]) -> dict[str, Any]:
+    precision = f["tp"] / (f["tp"] + f["fp"]) if f["tp"] + f["fp"] else 0.0
+    rappel = f["tp"] / (f["tp"] + f["fn"]) if f["tp"] + f["fn"] else 0.0
+    return {
+        "documents": f["documents"],
+        "exactitude_champs": round(f["champs_bons"] / f["champs_total"], 4) if f["champs_total"] else 0.0,
+        "f1_lignes": round(2 * precision * rappel / (precision + rappel), 4) if precision + rappel else 0.0,
+        "stp": round(f["stp"] / f["documents"], 4) if f["documents"] else 0.0,
+    }
 
 
 def _objet_champ(payload: Mapping[str, Any], chemin: str) -> Mapping[str, Any] | None:
@@ -294,6 +327,8 @@ def render_markdown(m: Mapping[str, Any]) -> str:
         "# Mesures observées — extraction WÉMA",
         "",
         f"- Modèle : `{m['modele']}` · backend `{m['backend']}` · graine {m['graine']} · AS_OF {m['as_of']}",
+        f"- Lecture : **{m.get('chaine', 'chaine reelle')}** (OCR `{m.get('ocr', 'auto')}`)",
+        f"- Jeu mesuré : **{m.get('jeu', 'tous')}**",
         f"- Corpus : {m['documents']} documents (dev {m['split']['dev']} / "
         f"validation {m['split']['validation']} / test {m['split']['test']})",
         f"- Valeurs inventées : **{m['valeurs_inventees']}**",
@@ -314,6 +349,11 @@ def render_markdown(m: Mapping[str, Any]) -> str:
     ]
     for entree in m["matrice_confusion"]:
         lignes.append(f"| {entree['reel']} | {entree['preddit']} | {entree['nombre']} |")
+    lignes += ["", "## Par famille de pièce (classes faibles visibles)", "",
+               "| Famille | Documents | Champs d'en-tête | F1 lignes | STP |", "|---|---:|---:|---:|---:|"]
+    for nom, f in m.get("par_famille", {}).items():
+        lignes.append(f"| {nom} | {f['documents']} | {f['exactitude_champs']:.1%} | {f['f1_lignes']:.4f} | {f['stp']:.1%} |")
+    lignes += ["", f"Écarts relevés : {m.get('erreurs_par_categorie', {})} · alertes de confiance : {m.get('alertes_confiance', 0)}"]
     lignes += ["", "## 30 points d'attention analysés (écarts puis alertes)", "",
                "| Document | Catégorie | Champ | Attendu | Observé | Confiance |",
                "|---|---|---|---|---|---:|"]
@@ -331,8 +371,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Mesure l'extraction sur le corpus annoté")
     parser.add_argument("--backend", default="demo", choices=("demo", "cpu"))
     parser.add_argument("--no-write", action="store_true", help="n'écrit pas metrics.json")
+    parser.add_argument("--split", choices=("dev", "validation", "test"), default=None,
+                        help="mesure un seul jeu (par défaut : les 120 documents)")
+    parser.add_argument("--ocr", default="auto", choices=("auto", "cache", "rendu"),
+                        help="auto/cache : chaîne réelle ; rendu : ablation « OCR parfait »")
     args = parser.parse_args(argv)
-    mesures = evaluer(backend=args.backend, ecrire=not args.no_write)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    mesures = evaluer(backend=args.backend,
+                      ecrire=not args.no_write and args.ocr != "rendu" and not args.split,
+                      ocr_backend=args.ocr, split=args.split)
     print(render_markdown(mesures))
     return 0
 

@@ -1,4 +1,5 @@
 {
+  "canal": "upload",
   "client": {
     "ifu": "9919698455",
     "missing": [],
@@ -71,7 +72,7 @@
     "vat": 330300
   },
   "reference": "BL-2026-314",
-  "sha256": "d703b414cbe51f471dc34bd8b389222dff243982402dfbb1d9c16dbbef292075",
+  "sha256": "d9be17a2856b6538b277585ac009cc5a67b97837a9cda130cf497c5b127d68ec",
   "source_file": "seeds/generated/eval/livraisons/BL-2026-314.pdf",
   "split": "validation"
 }

@@ -99,7 +99,7 @@ def champ(
         "confidence": combinee_confiance(confiance_ocr, confiance_modele, coherence, logprobs=logprobs),
         "page": page,
         "bbox": bbox,
-        "method": "ocr+llm+croise",
+        "method": f"{(bloc or {}).get('method') or 'ocr'}+regles",
     }
 
 
@@ -203,10 +203,9 @@ def assembler(proposition: Mapping[str, Any], backend: str = "demo") -> dict[str
                     "tax_rate", "line_total_ht", "delivered"):
             if nom in donnees:
                 ligne[nom] = convertir(donnees[nom], nom)
-        ligne["page"], ligne["bbox"], ligne["confidence"] = _source(
-            donnees.get("description", {}).get("bloc")
-        )
-        ligne["method"] = "ocr+llm+croise"
+        bloc_ligne = donnees.get("description", {}).get("bloc")
+        ligne["page"], ligne["bbox"], ligne["confidence"] = _source(bloc_ligne)
+        ligne["method"] = f"{(bloc_ligne or {}).get('method') or 'ocr'}+regles"
         lignes.append(ligne)
 
     totaux: dict[str, Any] = {}
@@ -384,7 +383,61 @@ def aplatir(payload: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def extraire_piece(chemin: str | Path, backend: str | None = None,
-                   type_piece: str | None = None) -> dict[str, Any]:
+                   type_piece: str | None = None, ocr_backend: str | None = None) -> dict[str, Any]:
     """Pipeline complet : OCR -> proposition -> schéma contraint -> validation."""
     from adapters.llm import extraire as extraire_llm
-    return extraire_llm(chemin, backend=backend, doc_type_hint=type_piece)
+    return extraire_llm(chemin, backend=backend, doc_type_hint=type_piece, ocr_backend=ocr_backend)
+
+
+def persister(conn: Any, document_id: str, payload: Mapping[str, Any], duree_ms: int = 0) -> str:
+    """Écrit une passe d'extraction : ``extractions``, ``extracted_fields``, ``document_totals``.
+
+    Chaque champ garde son chemin (``client.name``, ``client.ifu``,
+    ``lines[0].quantity``, ``totals.printed_ht``…), celui que lit
+    ``controls._champ_extrait``. Une nouvelle passe s'ajoute, elle n'écrase
+    rien. L'identifiant est ordonné par document pour que « la dernière passe »
+    soit bien la plus récente. À appeler dans la transaction de l'appelant.
+    """
+    import uuid
+
+    from config import horodatage
+
+    rang = conn.execute(
+        "SELECT COUNT(*) FROM extractions WHERE document=?", (document_id,)
+    ).fetchone()[0]
+    extraction_id = f"ext_{int(rang) + 1:04d}_{uuid.uuid4().hex[:8]}"
+    conn.execute(
+        "INSERT INTO extractions(id, document, modele, version, date, brut_json, duree_ms) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (extraction_id, document_id, str(payload.get("model", MODELE_DEMO)),
+         f"{SCHEMA_VERSION}/{payload.get('backend', 'demo')}", horodatage(),
+         canonical(payload), int(duree_ms)),
+    )
+    lignes = []
+    for chemin, champ_extrait in _parcours_champs(payload):
+        valeur_champ = champ_extrait.get("value")
+        brut = champ_extrait.get("raw", valeur_champ)
+        lignes.append((
+            f"fld_{uuid.uuid4().hex[:12]}", extraction_id, chemin,
+            None if brut is None else str(brut),
+            None if valeur_champ is None else str(valeur_champ),
+            float(champ_extrait.get("confidence", 0.0) or 0.0),
+            champ_extrait.get("page"),
+            json.dumps(champ_extrait.get("bbox")),
+            champ_extrait.get("method"),
+            champ_extrait.get("missing") or None,
+        ))
+    conn.executemany(
+        "INSERT INTO extracted_fields(id, extraction, chemin, valeur, valeur_normalisee, confiance, "
+        "page, bbox, methode, missing) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        lignes,
+    )
+    totaux = payload.get("totals") or {}
+    conn.execute(
+        "INSERT INTO document_totals(document, printed_ht, printed_vat, printed_ttc) VALUES (?, ?, ?, ?) "
+        "ON CONFLICT(document) DO UPDATE SET printed_ht=excluded.printed_ht, "
+        "printed_vat=excluded.printed_vat, printed_ttc=excluded.printed_ttc",
+        (document_id, valeur(totaux.get("printed_ht")), valeur(totaux.get("printed_vat")),
+         valeur(totaux.get("printed_ttc"))),
+    )
+    return extraction_id

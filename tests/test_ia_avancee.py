@@ -143,10 +143,10 @@ class TestBackendsOptionnels(unittest.TestCase):
             with self.assertRaises(ocr.OCRIndisponible):
                 ocr.lire(self._fichier(dossier), backend="inconnu")
 
-    def test_sidecar_absent_ne_rompt_pas_sur_un_repli_silencieux(self) -> None:
+    def test_rendu_absent_ne_rompt_pas_sur_un_repli_silencieux(self) -> None:
         with tempfile.TemporaryDirectory() as dossier:
             with self.assertRaises(ocr.OCRIndisponible):
-                ocr.lire(self._fichier(dossier), backend="sidecar")
+                ocr.lire(self._fichier(dossier), backend="rendu")
 
     def test_vlm_sans_endpoint_refuse(self) -> None:
         with tempfile.TemporaryDirectory() as dossier:

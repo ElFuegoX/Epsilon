@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import math
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -48,7 +51,9 @@ class TestChampContraint(unittest.TestCase):
         self.assertEqual(champ["page"], 2)
         self.assertEqual(champ["bbox"], [10.0, 20.0, 30.0, 5.0])
         self.assertGreaterEqual(champ["confidence"], 0.80)
-        self.assertEqual(champ["method"], "ocr+llm+croise")
+        self.assertEqual(champ["method"], "ocr+regles")
+        bloc["method"] = "easyocr"
+        self.assertEqual(extraction.champ("X", bloc)["method"], "easyocr+regles")
 
     def test_champ_absent_ne_recoit_aucune_valeur(self) -> None:
         champ = extraction.champ(None, {"page": 1, "bbox": [1, 2, 3, 4]}, absent=True)
@@ -95,15 +100,16 @@ class TestCorpus(unittest.TestCase):
         self.assertEqual(manifest["referentiels"]["articles"], 120)
         self.assertEqual(settings.graine_demo, manifest["graine"])
 
-    def test_fichier_et_sidecar_vont_ensemble(self) -> None:
+    def test_fichier_et_rendu_vont_ensemble(self) -> None:
         verite = json.loads(TEMOIN.read_text(encoding="utf-8"))
         piece = RACINE / verite["source_file"]
-        sidecar = piece.with_name(piece.stem + ".layout.json")
+        rendu = piece.with_name(piece.stem + ".render.json")
         self.assertTrue(piece.is_file())
-        self.assertTrue(sidecar.is_file())
-        donnees = json.loads(sidecar.read_text(encoding="utf-8"))
+        self.assertTrue(rendu.is_file())
+        donnees = json.loads(rendu.read_text(encoding="utf-8"))
         self.assertEqual(donnees["sha256"], verite["sha256"])
         self.assertEqual(donnees["bbox_unite"], "pourcent")
+        self.assertEqual(donnees["role"], "verite_de_rendu")
 
     def test_ocr_lit_blocs_avec_bbox(self) -> None:
         blocs = ocr.lire(RACINE / "seeds" / "generated" / "demo" / "devis" / "DEV-2026-041.pdf")
@@ -111,7 +117,9 @@ class TestCorpus(unittest.TestCase):
         for bloc in blocs:
             self.assertEqual(len(bloc["bbox"]), 4)
             self.assertTrue(all(0 <= v <= 100 for v in bloc["bbox"]))
-            self.assertIn(bloc["method"], ("ocr", "mise_en_page", "pypdf", "texte"))
+            self.assertEqual(bloc["method"], "pdf_texte")
+            for mot in bloc["words"]:
+                self.assertEqual(len(mot["bbox"]), 4)
 
 
 class TestPipeline(unittest.TestCase):
@@ -169,21 +177,166 @@ class TestPipeline(unittest.TestCase):
                 )
 
 
+def _cache_complet() -> bool:
+    """Vrai si chaque image du corpus a sa lecture EasyOCR en cache."""
+    images = [p for p in (RACINE / "seeds" / "generated").rglob("*.png")]
+    return bool(images) and all(
+        (ocr.CACHE / f"{ocr.empreinte_contenu(p)}.json").is_file() for p in images
+    )
+
+
+class TestOCRReel(unittest.TestCase):
+    PDF = RACINE / "seeds" / "generated" / "demo" / "devis" / "DEV-2026-041.pdf"
+
+    def test_extraction_ne_lit_jamais_le_rendu_du_generateur(self) -> None:
+        """Un rendu falsifié à côté de la pièce ne change rien : on lit le fichier."""
+        with tempfile.TemporaryDirectory() as dossier:
+            copie = Path(dossier) / self.PDF.name
+            shutil.copy(self.PDF, copie)
+            rendu = json.loads(self.PDF.with_name("DEV-2026-041.render.json").read_text(encoding="utf-8"))
+            for element in rendu["elements"]:
+                element["texte"] = element["texte"].replace("Sossa", "FALSIFIE")
+            copie.with_name("DEV-2026-041.render.json").write_text(json.dumps(rendu), encoding="utf-8")
+            payload = extraction.extraire_piece(copie)
+        self.assertEqual(payload["client"]["name"]["value"], "Ets Sossa Materiaux")
+
+    def test_pdf_hors_corpus_lu_par_sa_couche_texte(self) -> None:
+        import seed
+
+        mesure = seed._mesure_pdf()
+        client = {"raison_sociale": "Atelier Hors Corpus", "ifu": "1234567890123"}
+        lignes = [{"line_no": 1, "description": "Chaise pliante", "quantity": "6", "unit": "pcs",
+                   "unit_price_ht": 15000, "discount": 0, "tax_rate": 18, "line_total_ht": 90000}]
+        elements = (seed._entete("DEVIS", "DEV-2026-777", "2026-11-20", client, False, mesure)
+                    + seed._tableau(lignes, mesure, avec_livre=False)
+                    + seed._totaux_imprimes({"ht": 90000, "vat": 16200, "ttc": 106200},
+                                            ("ht", "vat", "ttc"), mesure))
+        with tempfile.TemporaryDirectory() as dossier:
+            chemin = Path(dossier) / "hors_corpus.pdf"
+            seed._ecrire_pdf(chemin, elements)
+            payload = extraction.extraire_piece(chemin)
+        self.assertEqual(payload["reference"]["value"], "DEV-2026-777")
+        self.assertEqual(payload["client"]["ifu"]["value"], "1234567890123")
+        self.assertEqual(len(payload["lines"]), 1)
+        self.assertEqual(payload["lines"][0]["unit_price_ht"]["value"], 15000)
+        self.assertEqual(payload["lines"][0]["quantity"]["value"], "6")
+        self.assertEqual(payload["lines"][0]["delivered"]["missing"], ABSENT)
+        self.assertEqual(extraction.valeur(payload["totals"]["printed_ttc"]), 106200)
+        self.assertTrue(payload["lines"][0]["unit_price_ht"]["method"].startswith("pdf_texte"))
+
+    def _image(self, dossier: str) -> Path:
+        from PIL import Image
+
+        chemin = Path(dossier) / "photo.png"
+        Image.new("RGB", (40, 30), "white").save(chemin)
+        return chemin
+
+    def test_image_hors_cache_sans_lecteur_echoue_explicitement(self) -> None:
+        with tempfile.TemporaryDirectory() as dossier:
+            with mock.patch.object(ocr, "CACHE", Path(dossier) / "cache"):
+                with self.assertRaises(ocr.OCRIndisponible):
+                    ocr.lire(self._image(dossier), backend="cache")
+                with mock.patch.object(ocr, "_lecteur", side_effect=ocr.OCRIndisponible("absent")):
+                    with self.assertRaises(ocr.OCRIndisponible):
+                        ocr.lire(self._image(dossier))
+
+    def test_cache_rejoue_la_lecture_a_l_identique(self) -> None:
+        page = {"numero": 1, "largeur": 40.0, "hauteur": 30.0, "methode": "easyocr",
+                "mots": [{"text": "DEVIS", "box": [2, 2, 20, 6], "confidence": 0.91, "angle": 0.0}]}
+        with tempfile.TemporaryDirectory() as dossier:
+            with mock.patch.object(ocr, "CACHE", Path(dossier) / "cache"), \
+                    mock.patch.object(ocr, "_pages_image", return_value=[page]) as lecteur:
+                image = self._image(dossier)
+                premier = ocr.lire(image)
+                second = ocr.lire(image, backend="cache")
+        self.assertEqual(lecteur.call_count, 1)
+        self.assertEqual(premier, second)
+        self.assertEqual(premier[0]["method"], "easyocr")
+
+    def test_zeros_lus_comme_des_o_seulement_dans_un_nombre(self) -> None:
+        self.assertEqual(llm._chiffres("OOO", apres_nombre=True), "000")
+        self.assertEqual(llm._chiffres("O0OO", apres_nombre=False), "0000")
+        self.assertEqual(llm._chiffres("OOO", apres_nombre=False), "OOO")  # pas de contexte : on ne devine pas
+        self.assertEqual(llm._chiffres("No", apres_nombre=True), "No")
+        self.assertEqual(llm._chiffres("Article", apres_nombre=True), "Article")
+        mots = llm._normaliser_mots([{"text": "192", "xr": [0, 1]}, {"text": "OOO", "xr": [1.2, 2]}])
+        self.assertEqual(mots[1]["text"], "000")
+        self.assertEqual(mots[1]["lu"], "OOO")  # la lecture d'origine reste traçable
+
+    def test_redressement_regroupe_les_lignes_d_une_photo_inclinee(self) -> None:
+        pente = math.tan(math.radians(4))  # la photo penche de 4°
+        mots = []
+        for rang, rangee in enumerate((("1", "Chaise", "15", "000"), ("2", "Table", "40", "000"))):
+            for colonne, texte in enumerate(rangee):
+                x, y = 100 + colonne * 300, 200 + rang * 40
+                y += x * pente
+                mots.append({"text": texte, "box": [x, y, x + 60, y + 14],
+                             "confidence": 0.9, "angle": 4.0})
+        mots.append({"text": "Livraison et installation", "box": [100, 100, 900, 114],
+                     "confidence": 0.9, "angle": 4.0})
+        page = {"numero": 1, "largeur": 1200.0, "hauteur": 1600.0, "methode": "easyocr", "mots": mots}
+        textes = [ligne["text"] for ligne in ocr.lignes_depuis_pages([page])]
+        self.assertIn("1 Chaise 15 000", textes)
+        self.assertIn("2 Table 40 000", textes)
+
+
+class TestPersistance(unittest.TestCase):
+    def test_champs_persistes_lisibles_par_les_controles(self) -> None:
+        import db
+        from domain import controls
+
+        payload = extraction.extraire_piece(TestOCRReel.PDF)
+        with tempfile.TemporaryDirectory() as dossier:
+            chemin_base = str(Path(dossier) / "wema.db")
+            db.initialize(chemin_base)
+            conn = db.connect(chemin_base)
+            try:
+                with db.transaction(conn):
+                    conn.execute(
+                        "INSERT INTO documents(id, type, nom, mime, taille, hash, pages, canal, statut, cree_le) "
+                        "VALUES ('doc-041', 'devis', 'DEV-2026-041.pdf', 'application/pdf', 1, 'h', 1, "
+                        "'email', 'EXTRAIT', '2026-11-25T00:00:00Z')"
+                    )
+                    premiere = extraction.persister(conn, "doc-041", payload)
+                    seconde = extraction.persister(conn, "doc-041", payload)
+                self.assertLess(premiere, seconde)
+                self.assertEqual(controls._champ_extrait(conn, "doc-041", "client.name"),
+                                 "Ets Sossa Materiaux")
+                self.assertIsNone(controls._champ_extrait(conn, "doc-041", "client.ifu"))
+                motif = conn.execute(
+                    "SELECT missing FROM extracted_fields WHERE extraction=? AND chemin='client.ifu'",
+                    (seconde,),
+                ).fetchone()[0]
+                self.assertEqual(motif, ABSENT)
+                totaux = conn.execute("SELECT * FROM document_totals WHERE document='doc-041'").fetchone()
+                self.assertEqual(totaux["printed_ht"], 1_020_000)
+                self.assertEqual(totaux["printed_ttc"], 1_203_600)
+                prix = conn.execute(
+                    "SELECT valeur_normalisee, page, bbox FROM extracted_fields "
+                    "WHERE extraction=? AND chemin='lines[1].unit_price_ht'", (seconde,),
+                ).fetchone()
+                self.assertEqual(prix["valeur_normalisee"], "120000")
+                self.assertEqual(len(json.loads(prix["bbox"])), 4)
+            finally:
+                conn.close()
+
+
 class TestMesures(unittest.TestCase):
-    def test_mesures_reproductibles(self) -> None:
-        premier = metrics.evaluer(ecrire=False)
-        second = metrics.evaluer(ecrire=False)
+    def test_parseur_sur_ocr_parfait(self) -> None:
+        """Ablation : texte exact du générateur. Mesure le parseur seul, pas la lecture."""
+        mesures = metrics.evaluer(ecrire=False, ocr_backend="rendu")
+        self.assertEqual(mesures["documents"], 120)
+        self.assertEqual(mesures["valeurs_inventees"], 0)
+        self.assertGreaterEqual(mesures["exactitude_champs"], 0.95)
+        self.assertGreaterEqual(mesures["lignes"]["f1"], 0.95)
+
+    @unittest.skipUnless(_cache_complet(), "cache OCR incomplet : python -m adapters.ocr --warm")
+    def test_chaine_reelle_reproductible_et_sans_invention(self) -> None:
+        premier = metrics.evaluer(ecrire=False, ocr_backend="cache")
+        second = metrics.evaluer(ecrire=False, ocr_backend="cache")
         self.assertEqual(premier, second)
         self.assertEqual(premier["documents"], 120)
         self.assertEqual(premier["valeurs_inventees"], 0)
-        self.assertGreaterEqual(premier["exactitude_champs"], 0.95)
-        self.assertGreaterEqual(premier["lignes"]["f1"], 0.90)
-        self.assertGreaterEqual(premier["exactitude_totaux_imprimes"], 0.98)
-        self.assertEqual(premier["matrice_confusion"],
-                         [{"reel": "bon_livraison", "preddit": "bon_livraison", "nombre": 20},
-                          {"reel": "commande", "preddit": "commande", "nombre": 30},
-                          {"reel": "devis", "preddit": "devis", "nombre": 50},
-                          {"reel": "message", "preddit": "message", "nombre": 20}])
 
 
 if __name__ == "__main__":

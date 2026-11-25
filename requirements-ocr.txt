@@ -1,0 +1,5 @@
+# OCR reel des photos (optionnel). Installe torch CPU (~200 Mo).
+# Necessaire seulement pour lire une image absente du cache seeds/ocr_cache/
+# ou pour regenerer ce cache : python -m adapters.ocr --warm
+# Premiere execution : telecharge une fois les poids EasyOCR (~90 Mo) dans ~/.EasyOCR.
+easyocr>=1.7,<2
