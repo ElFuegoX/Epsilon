@@ -131,6 +131,16 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 | **4 — Engagement** | Figer et registrar | `Preview.jsx`, `Validation.jsx`, `Register.jsx`, `Referentials.jsx`, `Audit.jsx` | Extrait / recalculé / écart côte à côte, double confirmation désactivée après 1er clic, registre et journal |
 | **5 — Bascule API** | Passer du mock au réel | `src/api.js`, `tests/test_e2e.py` avec Melon | `VITE_USE_MOCK=false`, parcours rejoué, portable + téléphone |
 
+### État d'avancement (fin de session)
+
+- [x] **Phase 0** — `npm install` OK (131 paquets), `npm run build` OK (48 modules). `web/.env.example` créé.
+- [x] **Phase 1** — `App.jsx` (10 onglets), `Layout.jsx` (bandeau `SIMULATION`, sélecteur de rôle), `api.js` (client unique + `X-Role` + erreurs 409/422), `mock.js` (données déterministes), `utils.js`.
+- [x] **Phase 2** — `SourceViewer.jsx` (page simulée + overlay bbox, rendu PDF.js prêt dès qu'une URL sera fournie par Freud), `Inbox.jsx`, `Analysis.jsx` (clic sur `120 000` → surlignage de la ligne source, IFU absent + message de clarification).
+- [x] **Phase 3** — `Lines.jsx` (table éditable), `Controls.jsx` (9 anomalies simulées, résolution tracée), `Reconciliation.jsx` (ligne non livrée en rouge, décisions).
+- [x] **Phase 4** — `Preview.jsx`, `Validation.jsx` (double clic neutralisé), `Register.jsx` (facture + avoir total), `Referentials.jsx`, `Audit.jsx` (vérification de chaîne simulée).
+- [ ] **Phase 5** — en attente : API de Melon, PDF réel de Freud, `tests/test_e2e.py`, test portable/téléphone.
+- Point d'attention : `npm audit` signale 2 dépendances vulnérables (1 modérée, 1 élevée) à revoir avant la remise.
+
 ### Règles à ne jamais enfreindre
 - **Aucun calcul TVA dans le front** : on affiche ce que l'API renvoie. En cas de désaccord, l'API a raison.
 - **Aucune valeur par défaut** pour un champ absent : `— absent de la pièce —`.
@@ -223,8 +233,9 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 
 - Commit initial : `c95934b Initialisation et partage des tâches` (contient le plan à 4 personnes, les fichiers et les marqueurs TODO nominatifs).
 - Le fichier `Plan.md` avait été remplacé par une ancienne version à 3 personnes dans le dossier de travail ; il est remis à jour ici avec le plan nominatif **et** le plan d'attaque frontend (§7).
-- Prochaine étape immédiate : Jean-Marie attaque les **phases 0 et 1** du §7.
-- Aucun commit n'est fait lors de cette remise à jour.
+- Commit suivant : `972d865 Mis à jour de la répartition` (plan nominatif + plan d'attaque frontend).
+- La partie Jean-Marie est engagée : phases 0 à 4 du §7 codées en mode mock, `npm run build` vérifié. Il reste la phase 5 (bascule sur l'API de Melon et tests de parcours).
+- Ces modifications de code et ce suivi d'avancement ne sont pas encore commités.
 
 ---
 

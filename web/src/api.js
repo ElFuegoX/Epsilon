@@ -1,3 +1,62 @@
-// TODO Jean-Marie : client HTTP unique, base VITE_API_URL, en-tete X-Role.
-// Voir docs/API.md (contrat fourni par Melon).
+// Client HTTP unique. Voir docs/API.md (contrat écrit par Melon, consommé par Jean-Marie).
+// VITE_USE_MOCK=false bascule sur l'API réelle sans modifier les écrans.
+import { mockRequest } from './mock.js'
+
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
+export const DEFAULT_ROLE = import.meta.env.VITE_ROLE || 'dirigeant'
+let currentRole = DEFAULT_ROLE
+
+export function setRole(role) {
+  currentRole = role
+}
+
+function messageFrom(res, text) {
+  try {
+    const data = JSON.parse(text)
+    return data.detail || data.message || `${res.status} ${res.statusText}`
+  } catch {
+    return `${res.status} ${res.statusText}`
+  }
+}
+
+export async function request(path, { method = 'GET', body, role = currentRole } = {}) {
+  if (USE_MOCK) return mockRequest(path, { method, body, role })
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Role': role,
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  const text = await res.text()
+  if (!res.ok) throw new Error(messageFrom(res, text))
+  return text ? JSON.parse(text) : null
+}
+
+export const api = {
+  health: () => request('/health'),
+  listDocuments: () => request('/documents'),
+  getDocument: (id) => request(`/documents/${id}`),
+  extract: (id) => request(`/documents/${id}/extract`, { method: 'POST' }),
+  listDrafts: () => request('/drafts'),
+  getDraft: (id) => request(`/drafts/${id}`),
+  patchDraft: (id, patch) => request(`/drafts/${id}`, { method: 'PATCH', body: patch }),
+  addLine: (draftId, line) => request(`/drafts/${draftId}/lines`, { method: 'POST', body: line }),
+  patchLine: (lineId, patch) => request(`/lines/${lineId}`, { method: 'PATCH', body: patch }),
+  listAnomalies: (draftId) => request(`/drafts/${draftId}/anomalies`),
+  resolveAnomaly: (id) => request(`/anomalies/${id}/resolve`, { method: 'POST' }),
+  clarificationMessage: (draftId) => request(`/drafts/${draftId}/clarification-message`, { method: 'POST' }),
+  validate: (draftId) => request(`/drafts/${draftId}/validate`, { method: 'POST' }),
+  listInvoices: () => request('/invoices'),
+  getInvoice: (id) => request(`/invoices/${id}`),
+  issue: (id, channel) => request(`/invoices/${id}/issue`, { method: 'POST', body: { channel } }),
+  creditNote: (id, body) => request(`/invoices/${id}/credit-notes`, { method: 'POST', body }),
+  audit: () => request('/audit'),
+  verifyAudit: () => request('/audit/verify'),
+  clients: () => request('/referentials/clients'),
+  items: () => request('/referentials/items'),
+  reset: () => request('/admin/reset', { method: 'POST' }),
+}
