@@ -2,7 +2,7 @@
 
 > Blueprint de référence : `docs/WEMA_Blueprint_Facturation_BWAI2026_v1.1.pdf` (v1.1, 25/11/2026).
 > On travaille **uniquement à la racine de `Epsilon/`** : `api/`, `domain/`, `adapters/`, `worker/`, `web/`, `tests/`, `seeds/`, `docs/`. Il n'y a plus de dossier `wema/`.
-> **Les quatre codent.** La présentation, le pitch, la vidéo et le rapport ne sont pas des tâches actives : ils seront faits **quand l'outil sera prêt** (voir §12).
+> **Les quatre codent.** La présentation, le pitch, la vidéo et le rapport ne sont pas des tâches actives : ils seront faits **quand l'outil sera prêt** (voir §14).
 
 ---
 
@@ -36,7 +36,7 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 
 ### Tâche à réaliser, dans l'ordre
 1. **Moteur de calcul** (`domain/tax.py`) : TVA 18 % par ligne, entiers FCFA, arrondi demi-vers-le-haut, jamais de flottant. Sur `DEV-2026-041` : HT 1 040 000 / TVA 187 200 / TTC 1 227 200, contre un imprimé de 1 020 000 / 183 600 / 1 203 600 → écart HT 20 000.
-2. **9 contrôles** (`domain/controls.py`) : `MISSING_MANDATORY`, `UNKNOWN_CLIENT`, `UNKNOWN_ITEM`, `UNUSUAL_PRICE`, `DUPLICATE_DOCUMENT`, `DUPLICATE_INVOICE`, `QUANTITY_MISMATCH`, `ARITHMETIC_MISMATCH`, `INVALID_TAX`. Chaque anomalie porte sévérité bloquante/non bloquante et statut de résolution tracé.
+2. **9 contrôles** (`domain/controls.py`) : `MISSING_MANDATORY`, `UNKNOWN_CLIENT`, `UNKNOWN_ITEM`, `UNUSUAL_PRICE`, `DUPLICATE_DOCUMENT`, `DUPLICATE_INVOICE`, `QUANTITY_MISMATCH`, `ARITHMETIC_MISMATCH`, `INVALID_TAX`. Chaque anomalie porte une sévérité bloquante/non bloquante et un statut de résolution tracé.
 3. **Numérotation** (`domain/numbering.py`) : `FAC-AAAA-00000` et `AV-AAAA-00000` continus, dans une transaction, sans numéro consommé si la validation échoue.
 4. **Facture et avoir** (`domain/invoices.py`) : snapshot immuable, refus 409 sur facture émise, avoir borné par le TTC déjà facturé (cumul des avoirs ≤ TTC).
 5. **Rapprochement et pièces** (`domain/matching.py`, `domain/documents.py`) : commandé / livré / facturé ; une ligne non livrée est bloquée sauf décision humaine tracée.
@@ -110,7 +110,43 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 
 ---
 
-## 7. Déroulé sur 48 heures
+## 7. Plan d'attaque de Jean-Marie — démarrage immédiat
+
+### Principe directeur
+**Ne pas attendre Melon.** Jean-Marie code contre le contrat `docs/API.md`, pas contre l'API en cours d'écriture. Un seul interrupteur (`VITE_USE_MOCK`) choisit entre client HTTP réel et client fictif. Quand Melon aura terminé, on éteint le mock **sans toucher aux écrans**.
+
+### État de départ vérifié
+- `web/src/App.jsx` retourne `null` ; `web/src/api.js` ne contient que `API_URL` ; les 10 composants retournent `null`.
+- Aucune route de `docs/API.md` n'est encore implémentée côté Melon (toutes marquées `TODO Melon`).
+- `package.json` contient déjà React 18, Vite 5, Tailwind 3, PDF.js 4.
+
+### Phases
+
+| Phase | Objectif | Fichiers | Résultat attendu |
+|---|---|---|---|
+| **0 — 15 min** | Projet lancable | `npm install`, `npm run dev`, `npm run build`, `web/.env.example` (`VITE_API_URL`, `VITE_USE_MOCK`, `VITE_ROLE`) | Vite démarre et le build passe |
+| **1 — Socle** | Navigation et client unique | `src/App.jsx`, `src/components/Layout.jsx`, `src/api.js`, `src/mock.js` | 10 onglets, bandeau `SIMULATION`, `request(path, {method, body})` avec `X-Role` et gestion 409/422, mock déterministe calqué sur `docs/API.md` et `seeds/golden/DEV-2026-041.truth.json` |
+| **2 — Priorité jury** | Voir la pièce et sa source | `SourceViewer.jsx`, `Inbox.jsx`, `Analysis.jsx` | **Cliquer sur `120 000` ouvre la ligne du devis qui le contient** (page + bbox) |
+| **3 — Lignes et contrôles** | Éditer et décider | `Lines.jsx`, `Controls.jsx`, `Reconciliation.jsx` | Table éditable, anomalies avec résolution, ligne non livrée en rouge avec « exclure / réduire / justificatif » |
+| **4 — Engagement** | Figer et registrar | `Preview.jsx`, `Validation.jsx`, `Register.jsx`, `Referentials.jsx`, `Audit.jsx` | Extrait / recalculé / écart côte à côte, double confirmation désactivée après 1er clic, registre et journal |
+| **5 — Bascule API** | Passer du mock au réel | `src/api.js`, `tests/test_e2e.py` avec Melon | `VITE_USE_MOCK=false`, parcours rejoué, portable + téléphone |
+
+### Règles à ne jamais enfreindre
+- **Aucun calcul TVA dans le front** : on affiche ce que l'API renvoie. En cas de désaccord, l'API a raison.
+- **Aucune valeur par défaut** pour un champ absent : `— absent de la pièce —`.
+- **Aucun appel IA depuis le navigateur** : l'extraction passe par l'API.
+- Contrat de provenance attendu de Freud : `{ page, bbox, method, confidence }`, avec motif `ABSENT_DE_LA_PIECE`.
+
+### Coordinations au prochain point de sync
+| Avec | Ce que Jean-Marie attend |
+|---|---|
+| **Melon** | Statuts 409/422 et format exact des erreurs dans `docs/API.md` |
+| **Freud** | Format de provenance `{ page, bbox, method, confidence }` et motif d'absence |
+| **Larissa** | Libellés des 9 codes d'anomalie et les chiffres du devis témoin |
+
+---
+
+## 8. Déroulé sur 48 heures
 
 | Créneau | Larissa — règles | Melon — API/infra | Jean-Marie — front | Freud — données/IA |
 |---|---|---|---|---|
@@ -133,11 +169,11 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 3. **H16** — devis de 3 lignes reconstitué ; Larissa valide les montants à la main.
 4. **H24** — gel du périmètre ; toute nouvelle idée part dans `DECISIONS.md` en « plus tard ».
 5. **H38** — répétition du scénario complet ; on ne corrige plus que ce qui casse la démo.
-6. **H47** — checklist de démonstration (§11) cochée à quatre.
+6. **H47** — checklist de démonstration (§13) cochée à quatre.
 
 ---
 
-## 8. Répartition des épopées du blueprint
+## 9. Répartition des épopées du blueprint
 
 | Épopée | Responsable | Appui |
 |---|---|---|
@@ -154,7 +190,7 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 
 ---
 
-## 9. Conventions de collaboration
+## 10. Conventions de collaboration
 
 - **Contrat d'extraction** : `domain/extraction.py` (Freud). Champ absent = `null` + `missing`, jamais une valeur « probable ». Larissa consomme, Jean-Marie affiche.
 - **Contrat API** : `docs/API.md` (Melon). Jean-Marie code contre ce contrat ; Melon annonce tout changement au point de sync suivant.
@@ -162,12 +198,13 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 - **Identifiants** : UUID internes ; numéro fiscal continu uniquement à la validation. Les deux ne se confondent jamais.
 - **Graine et date** : `GRAINE_DEMO=20261125`, `AS_OF=2026-11-25`. Melon et Freud ne les changent pas sans en parler aux quatre.
 - **Branches** : `larissa-regles`, `melon-api`, `jean-marie-front`, `freud-ia`. `main` reste exécutable ; PR revue par au moins une autre personne.
-- **Messages de commit** : `Larissa|`, `Melon|`, `Jean-Marie|`, `Freud|` + verbe à l'impératif (ex. `Larissa| ajoute le contrôle ARITHMETIC_MISMATCH`).
+- **Messages de commit** : `Larissa|`, `Melon|`, `Jean-Marie|`, `Freud|` + verbe à l'impératif (ex. `Larissa| ajoute le contrôle ARITHMETIC_MISMATCH`). Le commit initial d'ossature utilise `Équipe|`.
 - **Règle de fusion** : qui casse `make test` corrige avant de rentrer chez soi.
+- **Décisions** : toute question de règle est tranchée par Larissa et écrite dans `docs/DECISIONS.md` (date, question, décision, motif, conséquence technique). Une décision non écrite n'existe pas.
 
 ---
 
-## 10. Risques et parades
+## 11. Risques et parades
 
 | Risque | Parade | Responsable |
 |---|---|---|
@@ -182,7 +219,16 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 
 ---
 
-## 11. Checklist de démonstration — code seulement
+## 12. État du dépôt et prochaine étape
+
+- Commit initial : `c95934b Initialisation et partage des tâches` (contient le plan à 4 personnes, les fichiers et les marqueurs TODO nominatifs).
+- Le fichier `Plan.md` avait été remplacé par une ancienne version à 3 personnes dans le dossier de travail ; il est remis à jour ici avec le plan nominatif **et** le plan d'attaque frontend (§7).
+- Prochaine étape immédiate : Jean-Marie attaque les **phases 0 et 1** du §7.
+- Aucun commit n'est fait lors de cette remise à jour.
+
+---
+
+## 13. Checklist de démonstration — code seulement
 
 - [ ] **[Melon/Freud]** Base réinitialisée avec `--as-of 2026-11-25`, trois rôles testés.
 - [ ] **[Jean-Marie]** Trois onglets ouverts : boîte d'entrée, analyse, registre.
@@ -196,7 +242,7 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 
 ---
 
-## 12. Présentation — **différée, pas assignée maintenant**
+## 14. Présentation — **différée, pas assignée maintenant**
 
 La consigne est : **tout le monde code d'abord**. Les éléments suivants ne sont donc pas des tâches actives et n'ont pas de propriétaire pour l'instant :
 

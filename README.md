@@ -97,15 +97,6 @@ Pas d'agrément e-MECeF, pas d'envoi réel à la DGI, pas de paiement réel, pas
 
 ---
 
-## Répartition du travail (tout le monde code)
+## Répartition du travail
 
-| Personne | Piste | Tâche |
-|---|---|---|
-| **Larissa** | Règles métier | Moteurs TVA, 9 contrôles, numérotation, facture/avoir, `domain/**` et leurs tests |
-| **Melon** | API & infrastructure | SQLite, endpoints, worker, audit, rôles, adaptateurs de sortie, `api/**`, `db.py`, `worker/**` |
-| **Jean-Marie** | Frontend | Les 10 écrans React, visionneuse PDF et provenance cliquable, `web/**` |
-| **Freud** | Données & IA | Corpus 120 pièces, vérité terrain, extraction OCR/LLM, `seed.py`, `domain/extraction.py`, `adapters/ocr.py`, `adapters/llm.py` |
-
-La présentation, le pitch, la vidéo et le rapport ne sont pas assignés maintenant : ils seront faits **quand l'outil sera prêt**.
-
-**Plan détaillé, tâches et critères de fin : [Plan.md](Plan.md).**
+Tout est centralisé dans **[Plan.md](Plan.md)** : attribution nominative (Larissa, Melon, Jean-Marie, Freud), tâches, fichiers possédés, plan d'attaque frontend, déroulé, conventions et checklist. Les quatre codent ; la présentation est différée jusqu'à ce que l'outil soit prêt.
