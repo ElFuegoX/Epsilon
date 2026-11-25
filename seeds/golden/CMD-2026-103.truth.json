@@ -1,0 +1,73 @@
+{
+  "client": {
+    "ifu": "9970739139",
+    "missing": [],
+    "name": "Groupe Gbaguidi Reliefs"
+  },
+  "date": "2026-11-23",
+  "degradation": null,
+  "document_type": "commande",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "photo",
+  "fields": {
+    "client.ifu": "9970739139",
+    "client.name": "Groupe Gbaguidi Reliefs",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-23",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "CMD-2026-103"
+  },
+  "id": "doc-CMD-2026-103",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "2",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 384000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "2",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 350000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Photo de commande synthetique, lecture OCR locale.",
+  "printed_totals": {
+    "ht": 734000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 734000,
+    "ttc": 866120,
+    "vat": 132120
+  },
+  "reference": "CMD-2026-103",
+  "sha256": "196cde34844bbdb16a44d8614f5e9840ca4e98676561b309f3abae887f40e90a",
+  "source_file": "seeds/generated/demo/photos/CMD-2026-103.png",
+  "split": "dev"
+}

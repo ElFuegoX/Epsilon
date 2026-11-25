@@ -1,0 +1,102 @@
+{
+  "client": {
+    "ifu": "9936714891",
+    "missing": [],
+    "name": "Groupe Bocco Transport"
+  },
+  "date": "2026-11-22",
+  "degradation": null,
+  "delivery": {
+    "1": "3",
+    "2": "3",
+    "3": "2",
+    "4": "1"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 20000,
+    "ttc": 23600,
+    "vat": 3600
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9936714891",
+    "client.name": "Groupe Bocco Transport",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-22",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-023"
+  },
+  "id": "doc-DEV-2026-023",
+  "injected_anomalies": [
+    "arithmetique"
+  ],
+  "lines": [
+    {
+      "delivered": "3",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 576000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "3",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 525000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "2",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 292000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    },
+    {
+      "delivered": "1",
+      "description": "Article quincaillerie 022",
+      "discount": 0,
+      "line_no": 4,
+      "line_total_ht": 72000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 72000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": null,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 1445000,
+    "ttc": 1705100,
+    "vat": 260100
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1465000,
+    "ttc": 1728700,
+    "vat": 263700
+  },
+  "reference": "DEV-2026-023",
+  "sha256": "0fd0be8f2fae649e0f0ca139f01b19d051c1e3045a441165513fd54469a543b7",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-023.pdf",
+  "split": "validation"
+}

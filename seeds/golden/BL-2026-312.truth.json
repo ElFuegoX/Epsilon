@@ -1,0 +1,77 @@
+{
+  "client": {
+    "ifu": "9991836341",
+    "missing": [],
+    "name": "Societe Sacca Electricite"
+  },
+  "date": "2026-11-14",
+  "degradation": null,
+  "delivery": {
+    "1": "2",
+    "2": "1"
+  },
+  "document_type": "bon_livraison",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "bon_livraison",
+  "fields": {
+    "client.ifu": "9991836341",
+    "client.name": "Societe Sacca Electricite",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-14",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "BL-2026-312"
+  },
+  "id": "doc-BL-2026-312",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "2",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 384000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "1",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 175000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "missing_line": null,
+  "notes": "Bon de livraison synthetique.",
+  "printed_totals": {
+    "ht": null,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 559000,
+    "ttc": 659620,
+    "vat": 100620
+  },
+  "reference": "BL-2026-312",
+  "sha256": "94506e18d88a055563fd24711439f78792b4a8928f18441295d13c58fe7c02df",
+  "source_file": "seeds/generated/eval/livraisons/BL-2026-312.pdf",
+  "split": "dev"
+}

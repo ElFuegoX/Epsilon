@@ -1,0 +1,84 @@
+{
+  "client": {
+    "ifu": "9953569263",
+    "missing": [],
+    "name": "Societe Yehouessi Tissus"
+  },
+  "date": "2026-11-12",
+  "degradation": null,
+  "document_type": "commande",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "photo",
+  "fields": {
+    "client.ifu": "9953569263",
+    "client.name": "Societe Yehouessi Tissus",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-12",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "CMD-2026-114"
+  },
+  "id": "doc-CMD-2026-114",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "4",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 768000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "1",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 175000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "3",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 438000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    }
+  ],
+  "missing": [
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Photo de commande synthetique, lecture OCR locale.",
+  "printed_totals": {
+    "ht": 1381000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1381000,
+    "ttc": 1629580,
+    "vat": 248580
+  },
+  "reference": "CMD-2026-114",
+  "sha256": "59cf716dc87dfd9d165da8d8ea985a82e18e0ed426f3d31cc2165a67df6af74f",
+  "source_file": "seeds/generated/demo/photos/CMD-2026-114.png",
+  "split": "validation"
+}

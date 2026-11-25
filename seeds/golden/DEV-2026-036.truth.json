@@ -1,0 +1,76 @@
+{
+  "client": {
+    "ifu": "9943025842",
+    "missing": [],
+    "name": "Ets Vianou Robinetterie"
+  },
+  "date": "2026-11-09",
+  "degradation": null,
+  "delivery": {
+    "1": "1",
+    "2": "0"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9943025842",
+    "client.name": "Ets Vianou Robinetterie",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-09",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-036"
+  },
+  "id": "doc-DEV-2026-036",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "1",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 192000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "0",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 525000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": 2,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 717000,
+    "ttc": 846060,
+    "vat": 129060
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 717000,
+    "ttc": 846060,
+    "vat": 129060
+  },
+  "reference": "DEV-2026-036",
+  "sha256": "5f09f1223484de9c23f2f2cb16e4d7b7684a068f2579f2e23b3e25d140659902",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-036.pdf",
+  "split": "dev"
+}

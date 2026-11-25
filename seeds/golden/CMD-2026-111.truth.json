@@ -1,0 +1,73 @@
+{
+  "client": {
+    "ifu": "9942451184",
+    "missing": [],
+    "name": "SARL Agbodjan Orfeverie"
+  },
+  "date": "2026-11-15",
+  "degradation": null,
+  "document_type": "commande",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "photo",
+  "fields": {
+    "client.ifu": "9942451184",
+    "client.name": "SARL Agbodjan Orfeverie",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-15",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "CMD-2026-111"
+  },
+  "id": "doc-CMD-2026-111",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "3",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 576000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "1",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 175000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Photo de commande synthetique, lecture OCR locale.",
+  "printed_totals": {
+    "ht": 751000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 751000,
+    "ttc": 886180,
+    "vat": 135180
+  },
+  "reference": "CMD-2026-111",
+  "sha256": "bf9a5b3513e2d1eb4b66a0811d03ce302870fcf49cbb7aa61b3b58bd60c8bea1",
+  "source_file": "seeds/generated/demo/photos/CMD-2026-111.png",
+  "split": "dev"
+}

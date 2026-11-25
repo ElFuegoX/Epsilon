@@ -1,0 +1,100 @@
+{
+  "client": {
+    "ifu": "9982332357",
+    "missing": [],
+    "name": "Atelier Gbeto Cuirs"
+  },
+  "date": "2026-11-19",
+  "degradation": null,
+  "delivery": {
+    "1": "3",
+    "2": "3",
+    "3": "2",
+    "4": "0"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9982332357",
+    "client.name": "Atelier Gbeto Cuirs",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-19",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-026"
+  },
+  "id": "doc-DEV-2026-026",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "3",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 576000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "3",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 525000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "2",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 292000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    },
+    {
+      "delivered": "0",
+      "description": "Article quincaillerie 022",
+      "discount": 0,
+      "line_no": 4,
+      "line_total_ht": 360000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 72000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": 4,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 1753000,
+    "ttc": 2068540,
+    "vat": 315540
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1753000,
+    "ttc": 2068540,
+    "vat": 315540
+  },
+  "reference": "DEV-2026-026",
+  "sha256": "4d9de46908fe87b69301b9a6b38e4b9f234070aced63463d8da8859fae0c75f7",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-026.pdf",
+  "split": "dev"
+}

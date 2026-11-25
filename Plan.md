@@ -12,10 +12,10 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 
 | Personne | Piste de code | Tâche concrète (une phrase) | Fichiers possédés | Livrable vérifiable |
 |---|---|---|---|---|
-| **Larissa** | Règles métier & moteurs déterministes | Écrire les moteurs qui calculent, contrôlent et numérotent, **sans jamais appeler l'IA** | `domain/tax.py`, `domain/controls.py`, `domain/numbering.py`, `domain/invoices.py`, `domain/matching.py`, `domain/documents.py`, `tests/test_tax.py`, `tests/test_controls.py`, `tests/test_numbering.py`, `tests/test_invoices.py`, `docs/DECISIONS.md`, `docs/RECETTE.md` | Moteur TVA exact, 9 contrôles, numérotation, idempotence, avoir ; tests au vert |
-| **Melon** | API & infrastructure | Rendre l'outil exécutable : base SQLite, endpoints, worker, fichiers générés, audit et rôles | `config.py`, `db.py`, `schema.py`, `schema.sql`, `api/*`, `worker/*`, `cli.py`, `adapters/pdf.py`, `adapters/email_sim.py`, `adapters/whatsapp_sim.py`, `adapters/mecef_stub.py`, `tests/test_audit.py`, `tests/test_concurrency.py`, `docs/API.md` | `docker compose up` fonctionne, API documentée, chaîne d'audit vérifiable |
+| **Larissa** | Règles métier & moteurs déterministes | Écrire les moteurs qui calculent, contrôlent et numérotent, **sans jamais appeler l'IA** | `domain/tax.py`, `domain/controls.py`, `domain/numbering.py`, `domain/invoices.py`, `domain/matching.py`, `domain/document_rules.py`, `domain/audit.py`, `tests/test_tax.py`, `tests/test_controls.py`, `tests/test_numbering.py`, `tests/test_invoices.py`, `docs/DECISIONS.md`, `docs/RECETTE.md` | Moteur TVA exact, 9 contrôles, numérotation, idempotence, avoir ; tests au vert |
+| **Melon** | API & infrastructure | Rendre l'outil exécutable : base SQLite, endpoints, worker, fichiers générés, audit et rôles | `config.py`, `db.py`, `schema.py`, `schema.sql`, `domain/documents.py`, `api/*`, `worker/*`, `cli.py`, `adapters/pdf.py`, `adapters/email_sim.py`, `adapters/whatsapp_sim.py`, `adapters/mecef_stub.py`, `tests/test_audit.py`, `tests/test_concurrency.py`, `docs/API.md` | `docker compose up` fonctionne, API documentée, chaîne d'audit vérifiable |
 | **Jean-Marie** | Frontend & visionneuse | Coder les 10 écrans React et rendre chaque valeur cliquable vers sa source | `web/**`, `tests/test_e2e.py` (avec Melon) | Parcours complet rejouable dans le navigateur, provenance visible |
-| **Freud** | Données & IA | Produire les 120 pièces synthétiques et l'extraction avec provenance, confiance et zéro valeur inventée | `seed.py`, `seeds/**`, `domain/extraction.py`, `domain/normalization.py`, `adapters/ocr.py`, `adapters/llm.py`, `tests/test_extraction.py`, `docs/FICHE_IA.md` | Jeu reproductible, extraction déterministe en mode `demo`, métriques mesurées |
+| **Freud** | Données & IA | Produire les 96 pièces de démonstration et les 120 documents annotés, avec provenance, confiance et zéro valeur inventée | `seed.py`, `seeds/**`, `domain/extraction.py`, `domain/normalization.py`, `domain/metrics.py`, `adapters/ocr.py`, `adapters/llm.py`, `tests/test_extraction.py`, `docs/FICHE_IA.md` | Jeu reproductible, extraction déterministe en mode `demo`, métriques mesurées |
 
 **Propriété des fichiers** : une seule personne écrit un fichier. Les autres le lisent et proposent des retours, mais ne l'éditent pas directement ; elles passent par la personne propriétaire ou par un point de synchronisation.
 
@@ -39,7 +39,7 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 2. **9 contrôles** (`domain/controls.py`) : `MISSING_MANDATORY`, `UNKNOWN_CLIENT`, `UNKNOWN_ITEM`, `UNUSUAL_PRICE`, `DUPLICATE_DOCUMENT`, `DUPLICATE_INVOICE`, `QUANTITY_MISMATCH`, `ARITHMETIC_MISMATCH`, `INVALID_TAX`. Chaque anomalie porte une sévérité bloquante/non bloquante et un statut de résolution tracé.
 3. **Numérotation** (`domain/numbering.py`) : `FAC-AAAA-00000` et `AV-AAAA-00000` continus, dans une transaction, sans numéro consommé si la validation échoue.
 4. **Facture et avoir** (`domain/invoices.py`) : snapshot immuable, refus 409 sur facture émise, avoir borné par le TTC déjà facturé (cumul des avoirs ≤ TTC).
-5. **Rapprochement et pièces** (`domain/matching.py`, `domain/documents.py`) : commandé / livré / facturé ; une ligne non livrée est bloquée sauf décision humaine tracée.
+5. **Rapprochement et pièces** (`domain/matching.py`, `domain/document_rules.py`) : commandé / livré / facturé ; transitions de statut et ligne non livrée bloquée sauf décision humaine tracée. L'ingestion, le hash et le stockage immuable restent dans `domain/documents.py`, possédé par **Melon** (§4).
 6. **Tests** (`tests/test_tax.py`, `test_controls.py`, `test_numbering.py`, `test_invoices.py`) : 1 000 cas de propriété sur le calcul, un test par code d'anomalie, continuité des numéros, immuabilité.
 7. **Spécifications de recette** (`docs/RECETTE.md`, `docs/DECISIONS.md`) : écrire les résultats attendus **avant** le code, pas après.
 
@@ -55,7 +55,7 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 ## 4. Melon — API & infrastructure
 
 ### Tâche à réaliser, dans l'ordre
-1. **Base et config** (`config.py`, `db.py`, `schema.py`, `schema.sql`) : SQLite WAL, schéma complet (pièces, brouillons, lignes, anomalies, clients, articles, factures, avoirs, paiements, journal), réinitialisation en une commande avec `AS_OF=2026-11-25`.
+1. **Base et config** (`config.py`, `db.py`, `schema.py`, `schema.sql`, `domain/documents.py`) : SQLite WAL, schéma complet (pièces, brouillons, lignes, anomalies, clients, articles, factures, avoirs, paiements, journal), réinitialisation en une commande avec `AS_OF=2026-11-25`. `domain/documents.py` contient l'ingestion, le hash, le refus de doublon et le stockage immuable : c'est du transport/persistance, pas une règle métier.
 2. **API** (`api/*`) : tous les endpoints de `docs/API.md`, schémas Pydantic, rôles via `X-Role`, `/health`, `/docs`, CORS, idempotence par clé de requête.
 3. **Worker** (`worker/*`) : file persistante `EN_ATTENTE_IA → EXTRAIT`, options `--once` et `--loop`, reprise sans doublon après coupure.
 4. **Adaptateurs de sortie** (`adapters/pdf.py`, `email_sim.py`, `whatsapp_sim.py`, `mecef_stub.py`) : PDF figé + hash, bandeau `SIMULATION`, canaux simulés journalisés, QR factice. Aucun appel réel à la DGI.
@@ -94,19 +94,20 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 ## 6. Freud — Données & intelligence artificielle
 
 ### Tâche à réaliser, dans l'ordre
-1. **Corpus** (`seed.py`, `seeds/**`) : 120 pièces synthétiques — 40 devis PDF, 30 photos de commande, 16 messages, 10 bons de livraison, 10 cas dégradés (rotation, ombre, tampon) ; aucune donnée réelle ; graine `20261125`.
+1. **Corpus** (`seed.py`, `seeds/**`) : deux jeux distincts et réconciliés. **96 pièces de démonstration** = 40 devis PDF + 30 photos + 16 messages + 10 bons de livraison. **120 documents annotés pour l'évaluation** = ces 96 pièces + 24 documents d'évaluation (4 messages, 10 BL, 10 cas dégradés rotation/ombre/tampon). Aucune donnée réelle ; graine `20261125`, `AS_OF=2026-11-25`. Le détail figure dans `seeds/README.md`.
 2. **Vérité terrain** (`seeds/golden/*.truth.json`) : champ par champ et ligne par ligne, split 60 % dev / 20 % validation / 20 % test. `DEV-2026-041` sert de pièce témoin (3 lignes, IFU absent, écart 20 000).
 3. **Extraction** (`domain/extraction.py`, `domain/normalization.py`) : schéma contraint, en-tête + lignes, normalisation IFU/date/nom, provenance page + bbox + méthode, confiance à 3 signaux (OCR 30 %, modèle 40 %, cohérence 30 %), seuils 0,80 / 0,90 / 0,95.
 4. **Adaptateurs d'entrée** (`adapters/ocr.py`, `adapters/llm.py`) : mode `AI_BACKEND=demo` déterministe, hors ligne, sans clé ; variantes `cpu` et `cloud` derrière le même contrat.
-5. **Règle d'or** : champ absent = `null` + `ABSENT_DE_LA_PIECE`. Aucun IFU, aucune échéance, aucun montant « probable ».
-6. **Mesures** (`tests/test_extraction.py`, `docs/FICHE_IA.md`) : exactitude par champ, F1 des lignes, exactitude des totaux, STP, rappel des anomalies injectées ; analyser 30 erreurs et publier les chiffres **observés**, y compris les classes faibles.
+5. **Règle d'or** : champ absent = `null` + `ABSENT_DE_LA_PIECE`. Aucun IFU, aucune échéance, aucun montant « probable ». Les `bbox` sont émises en pourcentage `{x, y, w, h}`, avec `bbox_px` optionnel côté OCR uniquement ; `docs/API.md` reste la propriété de Melon.
+6. **Mesures** (`domain/metrics.py`, `tests/test_extraction.py`, `docs/FICHE_IA.md`) : exactitude par champ, F1 des lignes, exactitude des totaux imprimés extraits, STP, rappel des anomalies injectées ; analyser les 30 premiers points d'attention (écarts réels puis alertes de confiance) et publier les chiffres **observés**, y compris les classes faibles.
 
 ### Definition of done — Freud
-- [ ] `python -m seed --reset --as-of 2026-11-25` produit 120 pièces annotées et le split 60/20/20 en moins de 30 s.
-- [ ] Toute valeur extraite non nulle porte page + bbox + méthode ; tout champ absent porte son motif.
-- [ ] Le test « zéro valeur inventée » passe sur l'IFU et l'échéance.
-- [ ] Le mode `demo` rejoue le même document avec le même résultat, sans réseau.
-- [ ] La matrice de confusion et la fiche IA contiennent des mesures réelles, pas les cibles du blueprint.
+- [x] `python -m seed --as-of 2026-11-25` produit 120 documents annotés et le split 72/24/24 ; empreinte `2414ff0cf0acafaf6b5ff13b4efa6f09636cba8a45c3346fe79efd5f0062debd`.
+- [x] Toute valeur extraite non nulle porte page + bbox + méthode ; tout champ absent porte `ABSENT_DE_LA_PIECE`.
+- [x] Le test « zéro valeur inventée » passe sur l'IFU et l'échéance (`python -m unittest discover -s tests -t . -v`, 23 tests au vert).
+- [x] Le mode `demo` rejoue le même document avec le même résultat, sans réseau ; `cloud` sans `WEMA_LLM_URL` lève une exception au lieu d'inventer.
+- [x] La matrice de confusion et la fiche IA contiennent des mesures réelles (`seeds/generated/metrics.json`), pas les cibles du blueprint.
+- [ ] Relecture humaine de la vérité terrain par Larissa (à faire ; la graine ne remplace pas une validation humaine).
 
 ---
 
@@ -138,7 +139,7 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 - [x] **Phase 2** — `SourceViewer.jsx` (page simulée + overlay bbox, rendu PDF.js prêt dès qu'une URL sera fournie par Freud), `Inbox.jsx`, `Analysis.jsx` (clic sur `120 000` → surlignage de la ligne source, IFU absent + message de clarification).
 - [x] **Phase 3** — `Lines.jsx` (table éditable), `Controls.jsx` (9 anomalies simulées, résolution tracée), `Reconciliation.jsx` (ligne non livrée en rouge, décisions).
 - [x] **Phase 4** — `Preview.jsx`, `Validation.jsx` (double clic neutralisé), `Register.jsx` (facture + avoir total), `Referentials.jsx`, `Audit.jsx` (vérification de chaîne simulée).
-- [ ] **Phase 5** — en attente : API de Melon, PDF réel de Freud, `tests/test_e2e.py`, test portable/téléphone.
+- [ ] **Phase 5** — en attente : API de Melon, bascule réelle sur le PDF généré par Freud (désormais disponible), `tests/test_e2e.py`, test portable/téléphone.
 - Point d'attention : `npm audit` signale 2 dépendances vulnérables (1 modérée, 1 élevée) à revoir avant la remise.
 
 ### Règles à ne jamais enfreindre
@@ -202,6 +203,7 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 
 ## 10. Conventions de collaboration
 
+- **Pièces : deux fichiers distincts** : `domain/documents.py` (Melon) = ingestion, hash, stockage, statut persisté ; `domain/document_rules.py` (Larissa) = règles de transition et blocage métier. Ne pas mélanger les deux.
 - **Contrat d'extraction** : `domain/extraction.py` (Freud). Champ absent = `null` + `missing`, jamais une valeur « probable ». Larissa consomme, Jean-Marie affiche.
 - **Contrat API** : `docs/API.md` (Melon). Jean-Marie code contre ce contrat ; Melon annonce tout changement au point de sync suivant.
 - **Vocabulaire des anomalies** : les 9 codes de `domain/controls.py` (§3). Aucun nouveau code sans accord à quatre.
@@ -235,7 +237,9 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 - Le fichier `Plan.md` avait été remplacé par une ancienne version à 3 personnes dans le dossier de travail ; il est remis à jour ici avec le plan nominatif **et** le plan d'attaque frontend (§7).
 - Commit suivant : `972d865 Mis à jour de la répartition` (plan nominatif + plan d'attaque frontend).
 - La partie Jean-Marie est engagée : phases 0 à 4 du §7 codées en mode mock, `npm run build` vérifié. Il reste la phase 5 (bascule sur l'API de Melon et tests de parcours).
-- Ces modifications de code et ce suivi d'avancement ne sont pas encore commités.
+- La partie Freud est livrée en local : corpus 96 démo / 120 annotés, OCR et extraction `demo` hors ligne, 23 tests au vert. Résultats observés : champs d'en-tête 100 %, F1 lignes 0,9966, totaux imprimés 100 %, STP 99,2 %, signaux d'anomalie 44/44, valeurs inventées 0. Empreinte du corpus : `2414ff0cf0acafaf6b5ff13b4efa6f09636cba8a45c3346fe79efd5f0062debd`. Détail dans `docs/FICHE_IA.md` et `seeds/generated/metrics.json`.
+- Larissa démarre sur la branche `larissa-regles` créée depuis `main`/`origin/main`, par `docs/RECETTE.md`. Elle récupérera les livrables frontend/Freud par rebase/merge quand ils seront poussés. Périmètre confirmé : `domain/audit.py` et `domain/document_rules.py` à elle ; `domain/documents.py` reste à Melon. Tests en `unittest` + 1 000 cas déterministes via `make test`, sans pytest/Hypothesis.
+- Ces modifications de code et ce suivi d'avancement ne sont pas encore commités. Aucun commit/push n'a été fait sans demande explicite.
 
 ---
 

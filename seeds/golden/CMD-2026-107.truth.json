@@ -1,0 +1,73 @@
+{
+  "client": {
+    "ifu": "9948233986",
+    "missing": [],
+    "name": "Maison Sodji Plastiques"
+  },
+  "date": "2026-11-19",
+  "degradation": null,
+  "document_type": "commande",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "photo",
+  "fields": {
+    "client.ifu": "9948233986",
+    "client.name": "Maison Sodji Plastiques",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-19",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "CMD-2026-107"
+  },
+  "id": "doc-CMD-2026-107",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "4",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 768000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "3",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 525000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Photo de commande synthetique, lecture OCR locale.",
+  "printed_totals": {
+    "ht": 1293000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1293000,
+    "ttc": 1525740,
+    "vat": 232740
+  },
+  "reference": "CMD-2026-107",
+  "sha256": "60bd1241655567cb792d2abc64cf776d0711da079c6bc90e32ce3331ffe465dc",
+  "source_file": "seeds/generated/demo/photos/CMD-2026-107.png",
+  "split": "dev"
+}

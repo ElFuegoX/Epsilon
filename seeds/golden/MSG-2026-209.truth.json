@@ -1,0 +1,67 @@
+{
+  "client": {
+    "ifu": null,
+    "missing": [
+      "ifu"
+    ],
+    "name": "Societe Yehouessi Tissus"
+  },
+  "date": "2026-11-17",
+  "degradation": null,
+  "document_type": "message",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "message",
+  "fields": {
+    "client.ifu": null,
+    "client.name": "Societe Yehouessi Tissus",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-17",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "MSG-2026-209"
+  },
+  "id": "doc-MSG-2026-209",
+  "injected_anomalies": [
+    "MISSING_MANDATORY"
+  ],
+  "lines": [
+    {
+      "delivered": "1",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 192000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    }
+  ],
+  "missing": [
+    "ifu",
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Message libre : aucun IFU n'est present dans la piece.",
+  "printed_totals": {
+    "ht": null,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 192000,
+    "ttc": 226560,
+    "vat": 34560
+  },
+  "reference": "MSG-2026-209",
+  "sha256": "0cfc037be53f5c614064e7bb2594939117b9a0b713400645597018454ee02d44",
+  "source_file": "seeds/generated/demo/messages/MSG-2026-209.txt",
+  "split": "validation"
+}

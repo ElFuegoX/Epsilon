@@ -1,0 +1,67 @@
+{
+  "client": {
+    "ifu": null,
+    "missing": [
+      "ifu"
+    ],
+    "name": "Ets Ayi Piano"
+  },
+  "date": "2026-11-09",
+  "degradation": null,
+  "document_type": "message",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "message",
+  "fields": {
+    "client.ifu": null,
+    "client.name": "Ets Ayi Piano",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-09",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "MSG-2026-217"
+  },
+  "id": "doc-MSG-2026-217",
+  "injected_anomalies": [
+    "MISSING_MANDATORY"
+  ],
+  "lines": [
+    {
+      "delivered": "2",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 384000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    }
+  ],
+  "missing": [
+    "ifu",
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Message libre : aucun IFU n'est present dans la piece.",
+  "printed_totals": {
+    "ht": null,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 384000,
+    "ttc": 453120,
+    "vat": 69120
+  },
+  "reference": "MSG-2026-217",
+  "sha256": "34e485f804203520de7fd0cfd1d7a7696d81567fed9609d60e5fe95bb1531ffb",
+  "source_file": "seeds/generated/eval/messages/MSG-2026-217.txt",
+  "split": "dev"
+}

@@ -1,0 +1,78 @@
+{
+  "client": {
+    "ifu": null,
+    "missing": [
+      "ifu"
+    ],
+    "name": "Maison Sossou Cosmetiques"
+  },
+  "date": "2026-11-06",
+  "degradation": null,
+  "document_type": "message",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "message",
+  "fields": {
+    "client.ifu": null,
+    "client.name": "Maison Sossou Cosmetiques",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-06",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "MSG-2026-220"
+  },
+  "id": "doc-MSG-2026-220",
+  "injected_anomalies": [
+    "MISSING_MANDATORY"
+  ],
+  "lines": [
+    {
+      "delivered": "3",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 576000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "2",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 350000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "ifu",
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Message libre : aucun IFU n'est present dans la piece.",
+  "printed_totals": {
+    "ht": null,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 926000,
+    "ttc": 1092680,
+    "vat": 166680
+  },
+  "reference": "MSG-2026-220",
+  "sha256": "cdf2acefc9801c4a8eb5b77aa81ff2d2ed1574b1faf3244202d1bb06b98b1673",
+  "source_file": "seeds/generated/eval/messages/MSG-2026-220.txt",
+  "split": "test"
+}

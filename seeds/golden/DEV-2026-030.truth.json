@@ -1,0 +1,78 @@
+{
+  "client": {
+    "ifu": "9914012569",
+    "missing": [],
+    "name": "Ets Adekunle Spirales"
+  },
+  "date": "2026-11-15",
+  "degradation": null,
+  "delivery": {
+    "1": "4",
+    "2": "3"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 20000,
+    "ttc": 23600,
+    "vat": 3600
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9914012569",
+    "client.name": "Ets Adekunle Spirales",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-15",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-030"
+  },
+  "id": "doc-DEV-2026-030",
+  "injected_anomalies": [
+    "arithmetique"
+  ],
+  "lines": [
+    {
+      "delivered": "4",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 768000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "3",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 525000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": null,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 1273000,
+    "ttc": 1502140,
+    "vat": 229140
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1293000,
+    "ttc": 1525740,
+    "vat": 232740
+  },
+  "reference": "DEV-2026-030",
+  "sha256": "54c943c4766d449b7fa1a848ae8c28cb4085036d4b8a32bdcf8d971d34770458",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-030.pdf",
+  "split": "dev"
+}

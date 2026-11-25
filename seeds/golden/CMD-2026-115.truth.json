@@ -1,0 +1,73 @@
+{
+  "client": {
+    "ifu": "9969154888",
+    "missing": [],
+    "name": "Groupe Assogba Boulangerie"
+  },
+  "date": "2026-11-11",
+  "degradation": null,
+  "document_type": "commande",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "photo",
+  "fields": {
+    "client.ifu": "9969154888",
+    "client.name": "Groupe Assogba Boulangerie",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-11",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "CMD-2026-115"
+  },
+  "id": "doc-CMD-2026-115",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "2",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 384000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "1",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 175000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Photo de commande synthetique, lecture OCR locale.",
+  "printed_totals": {
+    "ht": 559000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 559000,
+    "ttc": 659620,
+    "vat": 100620
+  },
+  "reference": "CMD-2026-115",
+  "sha256": "5934779020a2ce5bca2b90b981ef4fbdb25a2e38dff5b1ea5c89b2f3fb1edace",
+  "source_file": "seeds/generated/demo/photos/CMD-2026-115.png",
+  "split": "test"
+}

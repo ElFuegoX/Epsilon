@@ -1,0 +1,90 @@
+{
+  "client": {
+    "ifu": "9991836341",
+    "missing": [],
+    "name": "Societe Sacca Electricite"
+  },
+  "date": "2026-11-20",
+  "degradation": "tampon",
+  "delivery": {
+    "1": "1",
+    "2": "3",
+    "3": "4"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "degrade",
+  "fields": {
+    "client.ifu": "9991836341",
+    "client.name": "Societe Sacca Electricite",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-20",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "DEG-2026-406"
+  },
+  "id": "doc-DEG-2026-406",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "1",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 192000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "3",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 525000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "4",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 584000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    }
+  ],
+  "missing": [
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "missing_line": null,
+  "notes": "Cas degrade : tampon. La verite terrain reste celle de la piece imprimee.",
+  "printed_totals": {
+    "ht": 1301000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "degraded",
+  "recalculated_totals": {
+    "ht": 1301000,
+    "ttc": 1535180,
+    "vat": 234180
+  },
+  "reference": "DEG-2026-406",
+  "sha256": "e77bd635d5a9749ad6e0990f7d9b4d1b47a99ee7dd1aa59bbe8b3b59e0799ffb",
+  "source_file": "seeds/generated/eval/degrades/DEG-2026-406.pdf",
+  "split": "dev"
+}

@@ -1,0 +1,78 @@
+{
+  "client": {
+    "ifu": null,
+    "missing": [
+      "ifu"
+    ],
+    "name": "SARL Tossou Aggregats"
+  },
+  "date": "2026-11-21",
+  "degradation": null,
+  "document_type": "commande",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "photo",
+  "fields": {
+    "client.ifu": null,
+    "client.name": "SARL Tossou Aggregats",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-21",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "CMD-2026-105"
+  },
+  "id": "doc-CMD-2026-105",
+  "injected_anomalies": [
+    "MISSING_MANDATORY"
+  ],
+  "lines": [
+    {
+      "delivered": "4",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 768000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "4",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 700000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "ifu",
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Photo de commande synthetique, lecture OCR locale.",
+  "printed_totals": {
+    "ht": 1468000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1468000,
+    "ttc": 1732240,
+    "vat": 264240
+  },
+  "reference": "CMD-2026-105",
+  "sha256": "fdea809cd7057394a8869969faeecc64fbb34458ab2107c70ffb47f5ed0e422b",
+  "source_file": "seeds/generated/demo/photos/CMD-2026-105.png",
+  "split": "test"
+}

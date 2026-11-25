@@ -1,0 +1,78 @@
+{
+  "client": {
+    "ifu": "9936714891",
+    "missing": [],
+    "name": "Groupe Bocco Transport"
+  },
+  "date": "2026-11-19",
+  "degradation": "rotation",
+  "delivery": {
+    "1": "1",
+    "2": "2"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "degrade",
+  "fields": {
+    "client.ifu": "9936714891",
+    "client.name": "Groupe Bocco Transport",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-19",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "DEG-2026-407"
+  },
+  "id": "doc-DEG-2026-407",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "1",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 192000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "2",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 350000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "missing_line": null,
+  "notes": "Cas degrade : rotation. La verite terrain reste celle de la piece imprimee.",
+  "printed_totals": {
+    "ht": 542000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "degraded",
+  "recalculated_totals": {
+    "ht": 542000,
+    "ttc": 639560,
+    "vat": 97560
+  },
+  "reference": "DEG-2026-407",
+  "sha256": "b81a73d47a27392bbca4eb4d70990b2a5ef7b032fb1975dfcec82318c4063e60",
+  "source_file": "seeds/generated/eval/degrades/DEG-2026-407.pdf",
+  "split": "dev"
+}

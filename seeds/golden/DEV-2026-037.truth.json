@@ -1,0 +1,90 @@
+{
+  "client": {
+    "ifu": "9970533814",
+    "missing": [],
+    "name": "SARL Kpodjedo Eclairages"
+  },
+  "date": "2026-11-08",
+  "degradation": null,
+  "delivery": {
+    "1": "4",
+    "2": "3",
+    "3": "5"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 20000,
+    "ttc": 23600,
+    "vat": 3600
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9970533814",
+    "client.name": "SARL Kpodjedo Eclairages",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-08",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-037"
+  },
+  "id": "doc-DEV-2026-037",
+  "injected_anomalies": [
+    "arithmetique"
+  ],
+  "lines": [
+    {
+      "delivered": "4",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 768000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "3",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 525000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "5",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 730000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": null,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 2003000,
+    "ttc": 2363540,
+    "vat": 360540
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 2023000,
+    "ttc": 2387140,
+    "vat": 364140
+  },
+  "reference": "DEV-2026-037",
+  "sha256": "2add3065c5b6e9c12573e36d6ac688761f14174e21bb0dba71c96e6cf4dbc860",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-037.pdf",
+  "split": "dev"
+}

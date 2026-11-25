@@ -1,0 +1,67 @@
+{
+  "client": {
+    "ifu": null,
+    "missing": [
+      "ifu"
+    ],
+    "name": "Societe Sacca Electricite"
+  },
+  "date": "2026-11-11",
+  "degradation": null,
+  "document_type": "message",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "message",
+  "fields": {
+    "client.ifu": null,
+    "client.name": "Societe Sacca Electricite",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-11",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "MSG-2026-215"
+  },
+  "id": "doc-MSG-2026-215",
+  "injected_anomalies": [
+    "MISSING_MANDATORY"
+  ],
+  "lines": [
+    {
+      "delivered": "5",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 960000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    }
+  ],
+  "missing": [
+    "ifu",
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Message libre : aucun IFU n'est present dans la piece.",
+  "printed_totals": {
+    "ht": null,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 960000,
+    "ttc": 1132800,
+    "vat": 172800
+  },
+  "reference": "MSG-2026-215",
+  "sha256": "68df7669e460ebaa1112c39eaf9cfc78403a3c17b3e279bafd599d88e8122ec5",
+  "source_file": "seeds/generated/demo/messages/MSG-2026-215.txt",
+  "split": "test"
+}

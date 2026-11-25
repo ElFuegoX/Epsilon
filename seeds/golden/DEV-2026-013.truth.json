@@ -1,0 +1,88 @@
+{
+  "client": {
+    "ifu": "9942451184",
+    "missing": [],
+    "name": "SARL Agbodjan Orfeverie"
+  },
+  "date": "2026-11-12",
+  "degradation": null,
+  "delivery": {
+    "1": "4",
+    "2": "3",
+    "3": "1"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9942451184",
+    "client.name": "SARL Agbodjan Orfeverie",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-12",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-013"
+  },
+  "id": "doc-DEV-2026-013",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "4",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 768000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "3",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 525000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "1",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 146000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": null,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 1439000,
+    "ttc": 1698020,
+    "vat": 259020
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1439000,
+    "ttc": 1698020,
+    "vat": 259020
+  },
+  "reference": "DEV-2026-013",
+  "sha256": "4c22d6c95319250d8897a7dc7c9a497a91150ae494820490da497966ba9bc836",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-013.pdf",
+  "split": "validation"
+}

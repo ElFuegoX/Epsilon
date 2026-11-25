@@ -1,0 +1,88 @@
+{
+  "client": {
+    "ifu": "9933985294",
+    "missing": [],
+    "name": "SARL Kiki Telecommunications"
+  },
+  "date": "2026-11-14",
+  "degradation": null,
+  "delivery": {
+    "1": "5",
+    "2": "4",
+    "3": "0"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9933985294",
+    "client.name": "SARL Kiki Telecommunications",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-14",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-031"
+  },
+  "id": "doc-DEV-2026-031",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "5",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 960000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "4",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 700000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "0",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 146000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": 3,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 1806000,
+    "ttc": 2131080,
+    "vat": 325080
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1806000,
+    "ttc": 2131080,
+    "vat": 325080
+  },
+  "reference": "DEV-2026-031",
+  "sha256": "236b7b796cc9a530d861f953609489fc275f4940ea3112071439da4f2daed4f7",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-031.pdf",
+  "split": "dev"
+}

@@ -1,0 +1,88 @@
+{
+  "client": {
+    "ifu": "9991836341",
+    "missing": [],
+    "name": "Societe Sacca Electricite"
+  },
+  "date": "2026-11-23",
+  "degradation": null,
+  "delivery": {
+    "1": "1",
+    "2": "5",
+    "3": "4"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9991836341",
+    "client.name": "Societe Sacca Electricite",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-23",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-022"
+  },
+  "id": "doc-DEV-2026-022",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "1",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 192000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "5",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 875000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "4",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 584000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": null,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 1651000,
+    "ttc": 1948180,
+    "vat": 297180
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1651000,
+    "ttc": 1948180,
+    "vat": 297180
+  },
+  "reference": "DEV-2026-022",
+  "sha256": "2407791caf6dd3d069e7ebac5ca5a5f1a1c7a23d0426efe9f526b50917517223",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-022.pdf",
+  "split": "dev"
+}

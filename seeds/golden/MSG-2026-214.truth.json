@@ -1,0 +1,78 @@
+{
+  "client": {
+    "ifu": null,
+    "missing": [
+      "ifu"
+    ],
+    "name": "Maison N'Da Soudure"
+  },
+  "date": "2026-11-12",
+  "degradation": null,
+  "document_type": "message",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "message",
+  "fields": {
+    "client.ifu": null,
+    "client.name": "Maison N'Da Soudure",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-12",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "MSG-2026-214"
+  },
+  "id": "doc-MSG-2026-214",
+  "injected_anomalies": [
+    "MISSING_MANDATORY"
+  ],
+  "lines": [
+    {
+      "delivered": "4",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 768000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "4",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 700000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "ifu",
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Message libre : aucun IFU n'est present dans la piece.",
+  "printed_totals": {
+    "ht": null,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1468000,
+    "ttc": 1732240,
+    "vat": 264240
+  },
+  "reference": "MSG-2026-214",
+  "sha256": "7cd30169d30d02f31bac825b11b81c6e599a88ad095a7e76a28575035c0e283e",
+  "source_file": "seeds/generated/demo/messages/MSG-2026-214.txt",
+  "split": "validation"
+}

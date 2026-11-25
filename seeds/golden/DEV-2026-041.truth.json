@@ -1,16 +1,94 @@
 {
-  "reference": "DEV-2026-041",
-  "document_type": "devis",
+  "client": {
+    "ifu": null,
+    "missing": [
+      "ifu"
+    ],
+    "name": "Ets Sossa Materiaux"
+  },
   "date": "2026-11-18",
-  "client": {"name": "Ets Sossa Materiaux", "ifu": null, "missing": ["ifu"]},
-  "lines": [
-    {"line_no": 1, "description": "Banquette 3 places", "quantity": "4", "unit": "pcs", "unit_price_ht": 185000, "tax_rate": 18, "line_total_ht": 740000},
-    {"line_no": 2, "description": "Table basse chêne", "quantity": "2", "unit": "pcs", "unit_price_ht": 120000, "tax_rate": 18, "line_total_ht": 240000},
-    {"line_no": 3, "description": "Livraison et installation", "quantity": "1", "unit": "forfait", "unit_price_ht": 60000, "tax_rate": 18, "line_total_ht": 60000}
+  "degradation": null,
+  "delivery": {
+    "1": "4",
+    "2": "2",
+    "3": "0"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 20000,
+    "ttc": 23600,
+    "vat": 3600
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": null,
+    "client.name": "Ets Sossa Materiaux",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-18",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-041"
+  },
+  "id": "doc-DEV-2026-041",
+  "injected_anomalies": [
+    "arithmetique",
+    "MISSING_MANDATORY"
   ],
-  "printed_totals": {"ht": 1020000, "vat": 183600, "ttc": 1203600},
-  "recalculated_totals": {"ht": 1040000, "vat": 187200, "ttc": 1227200},
-  "expected_ecart": {"ht": 20000, "vat": 3600, "ttc": 23600},
-  "delivery": {"1": "4", "2": "2", "3": "0", "missing_line": 3},
-  "notes": "IFU absent du devis, retrouve ensuite dans le referentiel ; ligne installation non livree."
+  "lines": [
+    {
+      "delivered": "4",
+      "description": "Banquette 3 places",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 740000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 185000
+    },
+    {
+      "delivered": "2",
+      "description": "Table basse chêne",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 240000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 120000
+    },
+    {
+      "delivered": "0",
+      "description": "Livraison et installation",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 60000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "forfait",
+      "unit_price_ht": 60000
+    }
+  ],
+  "missing": [
+    "ifu",
+    "dates.due"
+  ],
+  "missing_line": 3,
+  "notes": "IFU absent, ecart d'addition et installation non livree.",
+  "printed_totals": {
+    "ht": 1020000,
+    "ttc": 1203600,
+    "vat": 183600
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1040000,
+    "ttc": 1227200,
+    "vat": 187200
+  },
+  "reference": "DEV-2026-041",
+  "sha256": "a79783c63b1d5bdac120005533cf637daaf5fb50b47cd33da4f583a84e8cd39e",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-041.pdf",
+  "split": "dev"
 }

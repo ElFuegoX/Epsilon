@@ -1,0 +1,100 @@
+{
+  "client": {
+    "ifu": "9969154888",
+    "missing": [],
+    "name": "Groupe Assogba Boulangerie"
+  },
+  "date": "2026-11-08",
+  "degradation": null,
+  "delivery": {
+    "1": "1",
+    "2": "5",
+    "3": "3",
+    "4": "1"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9969154888",
+    "client.name": "Groupe Assogba Boulangerie",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-08",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-017"
+  },
+  "id": "doc-DEV-2026-017",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "1",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 192000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "5",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 875000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "3",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 438000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    },
+    {
+      "delivered": "1",
+      "description": "Article quincaillerie 022",
+      "discount": 0,
+      "line_no": 4,
+      "line_total_ht": 72000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 72000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": null,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 1577000,
+    "ttc": 1860860,
+    "vat": 283860
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1577000,
+    "ttc": 1860860,
+    "vat": 283860
+  },
+  "reference": "DEV-2026-017",
+  "sha256": "f60c8451ea011112963b38592b89f119cecb27ede58396c8913b00ed7380fd30",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-017.pdf",
+  "split": "dev"
+}

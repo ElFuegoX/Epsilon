@@ -1,0 +1,77 @@
+{
+  "client": {
+    "ifu": "9942451184",
+    "missing": [],
+    "name": "SARL Agbodjan Orfeverie"
+  },
+  "date": "2026-11-23",
+  "degradation": null,
+  "delivery": {
+    "1": "4",
+    "2": "1"
+  },
+  "document_type": "bon_livraison",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "bon_livraison",
+  "fields": {
+    "client.ifu": "9942451184",
+    "client.name": "SARL Agbodjan Orfeverie",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-23",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "BL-2026-303"
+  },
+  "id": "doc-BL-2026-303",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "4",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 768000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "1",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 175000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    }
+  ],
+  "missing": [
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "missing_line": null,
+  "notes": "Bon de livraison synthetique.",
+  "printed_totals": {
+    "ht": null,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 943000,
+    "ttc": 1112740,
+    "vat": 169740
+  },
+  "reference": "BL-2026-303",
+  "sha256": "072dfe7a2ca7ea4c7e6edbe1e047b0a25f5e50668d0920905219be785baa1360",
+  "source_file": "seeds/generated/demo/livraisons/BL-2026-303.pdf",
+  "split": "dev"
+}

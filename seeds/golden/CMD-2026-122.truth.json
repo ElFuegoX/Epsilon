@@ -1,0 +1,84 @@
+{
+  "client": {
+    "ifu": "9919698455",
+    "missing": [],
+    "name": "Ets Ayi Piano"
+  },
+  "date": "2026-11-24",
+  "degradation": null,
+  "document_type": "commande",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "photo",
+  "fields": {
+    "client.ifu": "9919698455",
+    "client.name": "Ets Ayi Piano",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-24",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "CMD-2026-122"
+  },
+  "id": "doc-CMD-2026-122",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "3",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 576000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "2",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 350000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "5",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 730000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    }
+  ],
+  "missing": [
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Photo de commande synthetique, lecture OCR locale.",
+  "printed_totals": {
+    "ht": 1656000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1656000,
+    "ttc": 1954080,
+    "vat": 298080
+  },
+  "reference": "CMD-2026-122",
+  "sha256": "6b9a2d25b33b09d7f8b97813dcc6678f8f3ebda52cd12191b0bdc4ad40c068cd",
+  "source_file": "seeds/generated/demo/photos/CMD-2026-122.png",
+  "split": "dev"
+}

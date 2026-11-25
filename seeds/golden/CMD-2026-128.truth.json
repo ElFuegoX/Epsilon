@@ -1,0 +1,84 @@
+{
+  "client": {
+    "ifu": "9914012569",
+    "missing": [],
+    "name": "Ets Adekunle Spirales"
+  },
+  "date": "2026-11-18",
+  "degradation": null,
+  "document_type": "commande",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "photo",
+  "fields": {
+    "client.ifu": "9914012569",
+    "client.name": "Ets Adekunle Spirales",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-18",
+    "payment_terms.days": null,
+    "payment_terms.text": null,
+    "reference": "CMD-2026-128"
+  },
+  "id": "doc-CMD-2026-128",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "5",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 960000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "5",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 875000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "2",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 292000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    }
+  ],
+  "missing": [
+    "dates.due",
+    "payment_terms.text",
+    "payment_terms.days"
+  ],
+  "notes": "Photo de commande synthetique, lecture OCR locale.",
+  "printed_totals": {
+    "ht": 2127000,
+    "ttc": null,
+    "vat": null
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 2127000,
+    "ttc": 2509860,
+    "vat": 382860
+  },
+  "reference": "CMD-2026-128",
+  "sha256": "f85e44bb8f20528a9ff4cca51b5759fb7fc3926bf54444b8616fff8290bcaf14",
+  "source_file": "seeds/generated/demo/photos/CMD-2026-128.png",
+  "split": "dev"
+}

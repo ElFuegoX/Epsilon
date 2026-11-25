@@ -1,0 +1,100 @@
+{
+  "client": {
+    "ifu": "9968862085",
+    "missing": [],
+    "name": "Atelier Agbossou Carreaux"
+  },
+  "date": "2026-11-25",
+  "degradation": null,
+  "delivery": {
+    "1": "2",
+    "2": "2",
+    "3": "4",
+    "4": "2"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9968862085",
+    "client.name": "Atelier Agbossou Carreaux",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-25",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-020"
+  },
+  "id": "doc-DEV-2026-020",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "2",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 384000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "2",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 350000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "4",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 584000,
+      "quantity": "4",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    },
+    {
+      "delivered": "2",
+      "description": "Article quincaillerie 022",
+      "discount": 0,
+      "line_no": 4,
+      "line_total_ht": 144000,
+      "quantity": "2",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 72000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": null,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 1462000,
+    "ttc": 1725160,
+    "vat": 263160
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1462000,
+    "ttc": 1725160,
+    "vat": 263160
+  },
+  "reference": "DEV-2026-020",
+  "sha256": "8936754c1f9756d33b3b4008bf532044763704f057360717cc4dfaa5c55c64bc",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-020.pdf",
+  "split": "dev"
+}

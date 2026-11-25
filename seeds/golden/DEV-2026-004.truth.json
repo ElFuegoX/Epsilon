@@ -1,0 +1,88 @@
+{
+  "client": {
+    "ifu": "9926568232",
+    "missing": [],
+    "name": "Societe Dossou Quincaillerie"
+  },
+  "date": "2026-11-21",
+  "degradation": null,
+  "delivery": {
+    "1": "1",
+    "2": "3",
+    "3": "5"
+  },
+  "document_type": "devis",
+  "expected_ecart": {
+    "ht": 0,
+    "ttc": 0,
+    "vat": 0
+  },
+  "family": "devis",
+  "fields": {
+    "client.ifu": "9926568232",
+    "client.name": "Societe Dossou Quincaillerie",
+    "dates.delivery": null,
+    "dates.due": null,
+    "dates.issue": "2026-11-21",
+    "payment_terms.days": 30,
+    "payment_terms.text": "30 jours",
+    "reference": "DEV-2026-004"
+  },
+  "id": "doc-DEV-2026-004",
+  "injected_anomalies": [],
+  "lines": [
+    {
+      "delivered": "1",
+      "description": "Article mobilier 001",
+      "discount": 0,
+      "line_no": 1,
+      "line_total_ht": 192000,
+      "quantity": "1",
+      "tax_rate": 18,
+      "unit": "pcs",
+      "unit_price_ht": 192000
+    },
+    {
+      "delivered": "3",
+      "description": "Article menuiserie 008",
+      "discount": 0,
+      "line_no": 2,
+      "line_total_ht": 525000,
+      "quantity": "3",
+      "tax_rate": 18,
+      "unit": "jour",
+      "unit_price_ht": 175000
+    },
+    {
+      "delivered": "5",
+      "description": "Article livraison 015",
+      "discount": 0,
+      "line_no": 3,
+      "line_total_ht": 730000,
+      "quantity": "5",
+      "tax_rate": 18,
+      "unit": "m²",
+      "unit_price_ht": 146000
+    }
+  ],
+  "missing": [
+    "dates.due"
+  ],
+  "missing_line": null,
+  "notes": "Devis synthetique.",
+  "printed_totals": {
+    "ht": 1447000,
+    "ttc": 1707460,
+    "vat": 260460
+  },
+  "quality": "clean",
+  "recalculated_totals": {
+    "ht": 1447000,
+    "ttc": 1707460,
+    "vat": 260460
+  },
+  "reference": "DEV-2026-004",
+  "sha256": "c8ade70f4bf2104da732b438dcc0e78a1b7ce1c9e8addd5581f1f2e3d534f2dc",
+  "source_file": "seeds/generated/demo/devis/DEV-2026-004.pdf",
+  "split": "test"
+}
