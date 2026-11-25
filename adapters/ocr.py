@@ -15,8 +15,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import urllib.request
 from pathlib import Path
 from typing import Any
+
+from config import settings
 
 RACINE = Path(__file__).resolve().parents[1]
 GENERE = RACINE / "seeds" / "generated"
@@ -181,16 +185,66 @@ def _depuis_texte(chemin: Path) -> list[dict[str, Any]]:
     return blocs
 
 
-def lire(chemin: str | Path) -> list[dict[str, Any]]:
-    """Lit une pièce et retourne ses blocs OCR avec provenance."""
+def _depuis_vlm(chemin: Path) -> list[dict[str, Any]]:
+    """Backend VLM optionnel : PaddleOCR-VL, MinerU, Docling via un endpoint.
+
+    Aucun modèle n'est téléchargé. Le service doit répondre avec des blocs
+    déjà normalisés en pourcentage de page. Sans endpoint, on échoue au lieu
+    de retomber silencieusement sur Tesseract.
+    """
+    endpoint = os.getenv("WEMA_VLM_ENDPOINT", "").strip()
+    if not endpoint:
+        raise OCRIndisponible("WEMA_VLM_ENDPOINT absent : backend vlm non utilisable")
+    corps = json.dumps(
+        {"path": str(chemin), "bbox_unite": "pourcent", "model": os.getenv("WEMA_VLM_MODEL", "auto")},
+        ensure_ascii=False,
+    ).encode("utf-8")
+    requete = urllib.request.Request(
+        endpoint, data=corps, headers={"Content-Type": "application/json"}, method="POST"
+    )
+    try:
+        with urllib.request.urlopen(requete, timeout=settings.ai_timeout_s) as reponse:
+            donnees = json.loads(reponse.read().decode("utf-8"))
+    except (OSError, ValueError) as exc:
+        raise OCRIndisponible(f"service VLM indisponible : {exc}") from exc
+    blocs = [
+        _bloc(
+            item.get("text", item.get("texte", "")),
+            item.get("page", 1),
+            item.get("bbox", [0.0, 0.0, 100.0, 100.0]),
+            item.get("confidence", item.get("confiance", 0.5)),
+            item.get("method", "vlm"),
+        )
+        for item in donnees.get("blocks", donnees.get("blocs", []))
+        if item
+    ]
+    blocs = [b for b in blocs if b["text"]]
+    if not blocs:
+        raise OCRIndisponible("le service VLM n'a renvoyé aucun bloc")
+    return blocs
+
+
+def lire(chemin: str | Path, backend: str | None = None) -> list[dict[str, Any]]:
+    """Lit une pièce et retourne ses blocs OCR avec provenance.
+
+    ``backend`` vaut ``auto`` (sidecar puis lecteurs locaux) ou ``vlm``.
+    Le mode ``demo`` reste hors ligne et déterministe.
+    """
     chemin = Path(chemin)
     if not chemin.is_file():
         raise FileNotFoundError(f"pièce introuvable : {chemin}")
+    choix_backend = (backend or os.getenv("WEMA_OCR_BACKEND", "auto")).strip().lower()
+    if choix_backend == "vlm":
+        return _depuis_vlm(chemin)
+    if choix_backend not in ("auto", "sidecar", "pdf", "image", "texte"):
+        raise OCRIndisponible(f"backend OCR inconnu : {choix_backend}")
     sidecar = _sidecar(chemin)
     if sidecar is not None:
         blocs, _ = _depuis_sidecar(chemin, sidecar)
         if blocs:
             return blocs
+    if choix_backend == "sidecar":
+        raise OCRIndisponible("aucun sidecar OCR pour cette pièce")
     suffixe = chemin.suffix.lower()
     if suffixe == ".pdf":
         return _depuis_pdf(chemin)

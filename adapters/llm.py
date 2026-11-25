@@ -26,8 +26,9 @@ from domain.extraction import (
     assembler,
     valider,
 )
+from domain.jev import Choice, Noul
 
-from . import ocr
+from . import constraints, ocr
 
 REFERENCE_RE = re.compile(r"\b((?:DEV|CMD|BL|MSG|DEG|FAC|AV)-\d{4}-\d{3,5})\b", re.I)
 CLIENT_RE = re.compile(r"(?:Client|Destinataire)\s*:\s*(.+?)(?:\s+IFU\s*:|$)", re.I)
@@ -74,15 +75,23 @@ def _item(brut: Any, bloc: Mapping[str, Any] | None, *, absent: bool = False,
 
 
 def classer(blocs: Sequence[Mapping[str, Any]], indice: str | None = None) -> str:
-    """Classe la pièce par mots-clés ; l'indice de l'ingestion peut aider."""
+    """Arbitre le type de pièce avec ``Choice`` ; ``commande`` reste le repli.
+
+    Le texte est une donnée, jamais une instruction. Les scores sont des
+    signaux de lecture, pas une confiance comptable.
+    """
     texte = " ".join(str(b.get("text", "")) for b in blocs).lower() + " " + (indice or "").lower()
-    if "bon de livraison" in texte or "livraison" in texte and "bl-" in texte:
-        return "bon_livraison"
-    if "devis" in texte:
-        return "devis"
-    if "message" in texte or "whatsapp" in texte:
-        return "message"
-    return "commande"
+    livraison = "bon de livraison" in texte or ("livraison" in texte and "bl-" in texte)
+    candidats = (
+        ("bon_livraison", 4 if livraison else 0),
+        ("devis", 3 if "devis" in texte else 0),
+        ("message", 2 if ("message" in texte or "whatsapp" in texte) else 0),
+        ("commande", 1),
+    )
+    choix = Choice.depuis(candidats, seuil=0).resoudre()
+    if isinstance(choix, Noul):
+        return "commande"
+    return str(choix)
 
 
 def _coherence(bloc: Mapping[str, Any] | None) -> float:
@@ -103,7 +112,8 @@ def proposer(blocs: Sequence[Mapping[str, Any]], backend: str | None = None,
     if backend not in BACKENDS:
         raise BackendIndisponible(f"backend inconnu : {backend}")
     if backend == "cloud":
-        return _proposer_cloud(blocs, doc_type_hint)
+        proposition = _proposer_cloud(blocs, doc_type_hint)
+        return constraints.appliquer(proposition, logprobs=proposition.get("logprobs"))
 
     type_piece = classer(blocs, doc_type_hint)
     champs: dict[str, Any] = {}
@@ -168,7 +178,7 @@ def proposer(blocs: Sequence[Mapping[str, Any]], backend: str | None = None,
         brut, bloc = _capturer(blocs, expression)
         totaux[nom] = _item(brut, bloc, absent=brut is None, coherence=_coherence(bloc))
 
-    return {
+    proposition = {
         "backend": backend,
         "document_type": type_piece,
         "fields": champs,
@@ -177,6 +187,7 @@ def proposer(blocs: Sequence[Mapping[str, Any]], backend: str | None = None,
         "confiance_modele": 0.96 if backend == "demo" else 0.90,
         "model": MODELE_DEMO,
     }
+    return constraints.appliquer(proposition)
 
 
 def _proposer_cloud(blocs: Sequence[Mapping[str, Any]], doc_type_hint: str | None) -> dict[str, Any]:
@@ -204,10 +215,11 @@ def _proposer_cloud(blocs: Sequence[Mapping[str, Any]], doc_type_hint: str | Non
 
 
 def extraire(chemin: str | Path, backend: str | None = None,
-             doc_type_hint: str | None = None) -> dict[str, Any]:
+             doc_type_hint: str | None = None,
+             ocr_backend: str | None = None) -> dict[str, Any]:
     """Lit une pièce, produit un schéma valide ou lève une exception."""
     backend = backend or settings.ai_backend
-    blocs = ocr.lire(chemin)
+    blocs = ocr.lire(chemin, backend=ocr_backend)
     if not blocs:
         raise ExtractionInvalide("aucun bloc OCR : extraction impossible")
     proposition = proposer(blocs, backend=backend, doc_type_hint=doc_type_hint)

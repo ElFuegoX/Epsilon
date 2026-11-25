@@ -19,6 +19,7 @@ from typing import Any, Callable, Iterable, Mapping
 from config import settings
 
 from . import normalization as norm
+from .jev import Noul, Score
 
 ABSENT = "ABSENT_DE_LA_PIECE"
 SCHEMA_VERSION = "1.0"
@@ -36,9 +37,10 @@ def canonical(obj: Any) -> str:
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
-def combinee_confiance(ocr: float, modele: float, croisee: float) -> float:
+def combinee_confiance(ocr: float, modele: float, croisee: float,
+                       logprobs: Any = None) -> float:
     """Trois signaux, jamais la confiance auto-déclarée du seul modèle."""
-    return round(0.30 * float(ocr) + 0.40 * float(modele) + 0.30 * float(croisee), 4)
+    return Score(float(ocr), float(modele), float(croisee), logprobs=logprobs).valeur
 
 
 def seuil(chemin: str) -> float:
@@ -76,21 +78,12 @@ def champ(
     coherence: float = 0.92,
     normaliseur: Callable[[Any], Any] | None = None,
     absent: bool = False,
+    logprobs: Any = None,
 ) -> dict[str, Any]:
     """Construit un champ contraint, ou un champ absent explicite."""
     page, bbox, confiance_ocr = _source(bloc)
     if absent or brut is None:
-        return {
-            "value": None,
-            "value_normalized": None,
-            "raw": None,
-            "confidence": 0.0,
-            "page": page,
-            "bbox": bbox,
-            "method": "llm",
-            "missing": ABSENT,
-            "motif": ABSENT,
-        }
+        return Noul(ABSENT).comme_champ(page=page, bbox=bbox, method="llm")
     normalise = normaliseur or (lambda v: v)
     try:
         normalise_valeur = normalise(brut)
@@ -103,7 +96,7 @@ def champ(
         "value": normalise_valeur,
         "value_normalized": normalise_valeur,
         "raw": brut,
-        "confidence": combinee_confiance(confiance_ocr, confiance_modele, coherence),
+        "confidence": combinee_confiance(confiance_ocr, confiance_modele, coherence, logprobs=logprobs),
         "page": page,
         "bbox": bbox,
         "method": "ocr+llm+croise",
@@ -179,6 +172,7 @@ def assembler(proposition: Mapping[str, Any], backend: str = "demo") -> dict[str
     ni de montant calculé.
     """
     confiance_modele = float(proposition.get("confiance_modele", 0.92))
+    logprobs_global = proposition.get("logprobs")
 
     def convertir(item: Mapping[str, Any] | None, chemin: str) -> dict[str, Any]:
         if not item:
@@ -190,6 +184,7 @@ def assembler(proposition: Mapping[str, Any], backend: str = "demo") -> dict[str
             coherence=float(item.get("coherence", 0.92)),
             normaliseur=NORMALISEURS(chemin),
             absent=bool(item.get("missing")),
+            logprobs=item.get("logprobs", logprobs_global),
         )
 
     champs = proposition.get("fields", {})
@@ -251,6 +246,7 @@ def assembler(proposition: Mapping[str, Any], backend: str = "demo") -> dict[str
         "totals": totaux,
         "missing": manquants,
         "confidence_global": confiance_global,
+        "constraint_report": dict(proposition.get("constraint_report", {})),
     }
 
 
