@@ -266,15 +266,20 @@ Racine : `document_type`, `reference`, `client{name, ifu, address, phone}`,
 `confiance = 0,30 × OCR + 0,40 × modèle + 0,30 × cohérence`
 
 - **OCR** : confiance moyenne des mots de la cellule (0,99 pour une couche texte PDF).
-- **Modèle** : 0,96 en `demo`, 0,90 sinon.
-- **Cohérence** : la ligne se tient-elle (`qté × PU − remise = total`, 0,98 sinon 0,55) ?
-  Le total HT imprimé est-il égal à la somme des lignes lues (0,98 sinon 0,60) ? Un IFU
-  contenant une lettre corrigée tombe à 0,60.
+- **Modèle** : solidité de la règle. 0,95 si la valeur est lue nette, 0,75 si le libellé n'a
+  été reconnu que par tolérance (`Cllent`), 0,65 si des lettres ont été converties en chiffres,
+  dégressif selon l'alignement d'une cellule sous sa colonne.
+- **Cohérence** : la ligne se tient-elle (`qté × PU − remise = total`) ? Le total imprimé
+  égale-t-il la somme des lignes ? Le nom et l'IFU correspondent-ils au **référentiel
+  clients** (un nom presque identique à un client connu, comme « Malson » pour « Maison », est suspect) ?
 
 Seuils de revue : 0,80 par défaut, 0,90 pour les champs fiscaux (IFU, TVA, totaux),
 0,95 pour les numéros. Sous le seuil, le champ part en revue humaine
 (`extraction.exiger_revue(payload)`). C'est pourquoi le total faux de `DEV-2026-041`
-ressort à 0,861 : la valeur lue est juste, mais elle contredit les lignes, donc on la fait regarder.
+ressort à 0,857 : la valeur lue est juste, mais elle contredit les lignes, donc on la fait regarder.
+
+**Tout le détail (barèmes, exemples, mesure de l'efficacité du seuil) est dans
+[`CONFIANCE.md`](CONFIANCE.md).** Mesuré : 48 erreurs sur 48 attrapées, 0 erreur silencieuse.
 
 ### Garde-fous (`valider`)
 

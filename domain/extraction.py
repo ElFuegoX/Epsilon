@@ -180,7 +180,8 @@ def assembler(proposition: Mapping[str, Any], backend: str = "demo") -> dict[str
         return champ(
             item.get("raw"),
             item.get("bloc"),
-            confiance_modele=confiance_modele,
+            # signal propre au champ (règle nette, tolérante, corrigée…) ; sinon celui du backend
+            confiance_modele=float(item.get("modele", confiance_modele)),
             coherence=float(item.get("coherence", 0.92)),
             normaliseur=NORMALISEURS(chemin),
             absent=bool(item.get("missing")),
@@ -383,10 +384,22 @@ def aplatir(payload: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def extraire_piece(chemin: str | Path, backend: str | None = None,
-                   type_piece: str | None = None, ocr_backend: str | None = None) -> dict[str, Any]:
-    """Pipeline complet : OCR -> proposition -> schéma contraint -> validation."""
+                   type_piece: str | None = None, ocr_backend: str | None = None,
+                   clients: Iterable[Mapping[str, Any]] | None = None) -> dict[str, Any]:
+    """Pipeline complet : OCR -> proposition -> schéma contraint -> validation.
+
+    ``clients`` : référentiel clients (``raison_sociale``, ``ifu``, ``id``), utilisé
+    seulement pour le signal de cohérence du nom et de l'IFU (docs/CONFIANCE.md).
+    Sans référentiel, ce signal reste neutre. Depuis la base : ``clients_depuis_base(conn)``.
+    """
     from adapters.llm import extraire as extraire_llm
-    return extraire_llm(chemin, backend=backend, doc_type_hint=type_piece, ocr_backend=ocr_backend)
+    return extraire_llm(chemin, backend=backend, doc_type_hint=type_piece, ocr_backend=ocr_backend,
+                        clients=list(clients) if clients is not None else None)
+
+
+def clients_depuis_base(conn: Any) -> list[dict[str, Any]]:
+    """Référentiel clients pour le signal de cohérence (lecture seule)."""
+    return [dict(r) for r in conn.execute("SELECT id, raison_sociale, ifu FROM clients")]
 
 
 def persister(conn: Any, document_id: str, payload: Mapping[str, Any], duree_ms: int = 0) -> str:

@@ -321,6 +321,61 @@ class TestPersistance(unittest.TestCase):
                 conn.close()
 
 
+class TestConfiance(unittest.TestCase):
+    """Signaux « modèle » et « cohérence » : voir docs/CONFIANCE.md."""
+
+    CLIENTS = [
+        {"id": "cli-1", "raison_sociale": "Maison Hounsa Boot en Bois", "ifu": "9934368630"},
+        {"id": "cli-2", "raison_sociale": "Ets Sossa Materiaux", "ifu": None},
+    ]
+
+    def test_nom_identique_au_referentiel(self) -> None:
+        nom, ifu, _ = llm._coherence_client("Maison Hounsa Boot en Bois", "9934368630", self.CLIENTS)
+        self.assertEqual((nom, ifu), (llm.COHERENCE_CONNUE, llm.COHERENCE_CONNUE))
+
+    def test_nom_presque_identique_est_suspect(self) -> None:
+        """« Malson » pour « Maison » : une lecture fautive, pas un nouveau client."""
+        nom, _, diagnostic = llm._coherence_client("Malson Hounsa Boot en Bols", None, self.CLIENTS)
+        self.assertEqual(nom, llm.COHERENCE_PRESQUE)
+        self.assertEqual(diagnostic["nom"], "presque_identique")
+
+    def test_nom_inconnu_est_un_client_nouveau_possible(self) -> None:
+        nom, _, _ = llm._coherence_client("Quincaillerie du Port", None, self.CLIENTS)
+        self.assertEqual(nom, llm.COHERENCE_NOUVELLE)
+
+    def test_ifu_d_un_client_nom_d_un_autre(self) -> None:
+        nom, ifu, _ = llm._coherence_client("Ets Sossa Materiaux", "9934368630", self.CLIENTS)
+        self.assertEqual((nom, ifu), (llm.COHERENCE_CONTRADICTION, llm.COHERENCE_CONTRADICTION))
+
+    def test_sans_referentiel_le_signal_reste_neutre(self) -> None:
+        nom, _, diagnostic = llm._coherence_client("Malson Hounsa", None, None)
+        self.assertEqual(nom, llm.COHERENCE_SANS_REFERENTIEL)
+        self.assertFalse(diagnostic["referentiel"])
+
+    def test_un_nom_suspect_part_en_revue_meme_avec_un_ocr_sur(self) -> None:
+        """OCR parfait, libellé net : la cohérence suffit à passer sous le seuil."""
+        confiance = extraction.combinee_confiance(1.0, llm.MODELE_NET, llm.COHERENCE_PRESQUE)
+        self.assertLess(confiance, extraction.seuil("client.name"))
+
+    def test_modele_libelle_net_ou_tolerant(self) -> None:
+        net = {"text": "Client : Ets Sossa", "words": [{"text": "Client"}, {"text": ":"}, {"text": "Ets"}]}
+        tolerant = {"text": "Cllent : Ets Sossa", "words": [{"text": "Cllent"}, {"text": ":"}, {"text": "Ets"}]}
+        self.assertEqual(llm._modele_libelle("client.name", net), llm.MODELE_NET)
+        self.assertEqual(llm._modele_libelle("client.name", tolerant), llm.MODELE_TOLERANT)
+
+    def test_modele_cellule(self) -> None:
+        self.assertEqual(llm._modele_cellule(0.5, [{"text": "185"}], True), llm.MODELE_NET)
+        self.assertAlmostEqual(llm._modele_cellule(llm.TOLERANCE_COLONNE, [{"text": "185"}], True),
+                               llm.MODELE_POSITION_MIN)
+        self.assertEqual(llm._modele_cellule(0.5, [{"text": "000", "lu": "OOO"}], True), llm.MODELE_CORRIGE)
+        self.assertEqual(llm._modele_cellule(0.5, [{"text": "4"}], False), 0.85)
+
+    def test_le_signal_modele_n_est_plus_constant(self) -> None:
+        payload = extraction.extraire_piece(TestOCRReel.PDF)
+        modeles = {round(payload["lines"][0][k]["confidence"], 4) for k in ("description", "unit_price_ht")}
+        self.assertEqual(len(modeles), 2)  # texte libre et montant ne reçoivent plus le même signal
+
+
 class TestMesures(unittest.TestCase):
     def test_parseur_sur_ocr_parfait(self) -> None:
         """Ablation : texte exact du générateur. Mesure le parseur seul, pas la lecture."""
@@ -337,6 +392,8 @@ class TestMesures(unittest.TestCase):
         self.assertEqual(premier, second)
         self.assertEqual(premier["documents"], 120)
         self.assertEqual(premier["valeurs_inventees"], 0)
+        # Le seuil doit attraper toute valeur fausse ou absente (docs/CONFIANCE.md).
+        self.assertEqual(premier["revue"]["erreurs_silencieuses"], 0)
 
 
 if __name__ == "__main__":
