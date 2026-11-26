@@ -5,12 +5,27 @@ import { money, statusColor } from '../utils.js'
 export default function Reconciliation({ draft, data, run, setNotice }) {
   const [decisions, setDecisions] = useState({})
 
-  const decide = (line, decision) => {
+  const decide = async (line, decision) => {
     setDecisions((prev) => ({ ...prev, [line.id]: decision }))
-    setNotice(`Décision « ${decision} » enregistrée sur la ligne ${line.line_no}.`)
-    if (line.delivered < line.quantity) {
-      run(() => api.resolveAnomaly('an-3'))
+    if (line.delivered >= line.quantity) {
+      setNotice(`Ligne ${line.line_no} conforme : aucune décision à tracer.`)
+      return
     }
+    // On résout l'anomalie réellement renvoyée par l'API (pas un identifiant de mock).
+    const anomalie = (data.anomalies || []).find(
+      (a) => a.status === 'OUVERTE' && (a.field === line.field || a.code === 'QUANTITY_MISMATCH')
+    )
+    if (!anomalie) {
+      setNotice({ type: 'info', text: `Décision « ${decision} » notée sur la ligne ${line.line_no} (aucune anomalie ouverte associée).` })
+      return
+    }
+    await run(async () => {
+      await api.resolveAnomaly(
+        anomalie.id,
+        `Décision ${decision} sur la ligne ${line.line_no} — livré ${line.delivered}/${line.quantity}`
+      )
+      setNotice({ type: 'success', text: `Décision « ${decision} » tracée sur la ligne ${line.line_no}.` })
+    })
   }
 
   if (!draft) return <p className="text-sm text-slate-500">Aucun brouillon.</p>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { API_URL, getRole } from '../api.js'
 import { money } from '../utils.js'
 
 const LABELS = {
@@ -24,7 +25,11 @@ export default function SourceViewer({ document: doc, highlight, onSelectField, 
       try {
         const pdfjs = await import('pdfjs-dist')
         pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
-        const pdf = await pdfjs.getDocument(doc.url).promise
+        const url = doc.url.startsWith('/') ? `${API_URL}${doc.url}` : doc.url
+        const pdf = await pdfjs.getDocument({
+          url,
+          httpHeaders: { 'X-Role': getRole() },
+        }).promise
         const page = await pdf.getPage(1)
         const canvas = canvasRef.current
         const viewport = page.getViewport({ scale: 1.2 })
@@ -37,7 +42,7 @@ export default function SourceViewer({ document: doc, highlight, onSelectField, 
     }
     renderPdf()
     return () => { cancelled = true }
-  }, [doc?.url])
+  }, [doc?.url, doc?.id])
 
   return (
     <div>
@@ -57,7 +62,7 @@ export default function SourceViewer({ document: doc, highlight, onSelectField, 
             </>
           ) : (
             <div className="absolute inset-0 p-5">
-              <div className="mb-4 text-[10px] uppercase tracking-widest text-slate-400">Aperçu simulé — en attente du PDF de Freud</div>
+              <div className="mb-4 text-[10px] uppercase tracking-widest text-slate-400">Aperçu des zones extraites — pièce sans fichier conservé</div>
               {(doc.pageText || []).map((line, index) => (
                 <div
                   key={index}

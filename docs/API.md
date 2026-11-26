@@ -10,6 +10,7 @@ Idempotence : en-tête optionnel `Idempotency-Key` sur `POST /documents`, `POST 
 |---|---|---|---|
 | `GET /health` | Public | État de l'API, version, `ai_backend`, `as_of` | Implémenté |
 | `GET /documents`, `POST /documents`, `GET /documents/{id}` | Lecture / Assistante+ | Lister, importer (fichier multipart ou JSON `{nom, texte}`), consulter | Implémenté |
+| `GET /documents/{id}/file` | Lecture | Copie immuable de la pièce source pour la visionneuse (`404` si message texte sans fichier) | Implémenté |
 | `POST /documents/{id}/extract` | Assistante+ | Mettre en file et exécuter l'extraction (idempotent) | Implémenté |
 | `GET /drafts`, `GET /drafts/{id}`, `PATCH /drafts/{id}` | Lecture / Assistante+ | Lister, consulter et modifier un brouillon (409 si déjà validé) | Implémenté |
 | `POST /drafts/{id}/lines`, `PATCH /lines/{id}` | Assistante+ | Ajouter ou corriger une ligne (recalcul via `domain/tax.py`) | Implémenté |
@@ -24,6 +25,8 @@ Idempotence : en-tête optionnel `Idempotency-Key` sur `POST /documents`, `POST 
 | `GET /referentials/items`, `POST /referentials/items` | Lecture / Assistante+ | Consulter et créer un article | Implémenté |
 | `GET /audit`, `GET /audit/verify`, `GET /audit/export.csv` | Lecture | Journal chaîné SHA-256, vérification d'intégrité et export CSV | Implémenté |
 | `POST /admin/reset` | **Dirigeant** | Réinitialiser la base et les fichiers générés (`AS_OF=2026-11-25`) | Implémenté |
+
+`GET /documents` et `GET /documents/{id}` exposent `url` (chemin relatif vers `/file`) uniquement lorsqu'une copie du fichier existe ; `null` sinon. Les téléchargements (`/pdf`, `/export.csv`, `/file`) exigent l'en-tête `X-Role` : le front les récupère via `fetch` puis ouvre un Blob local.
 
 ## Codes d'erreur standard
 

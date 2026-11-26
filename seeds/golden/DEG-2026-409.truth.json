@@ -68,7 +68,7 @@
     "vat": 97560
   },
   "reference": "DEG-2026-409",
-  "sha256": "3cc79888111c3f0e70e6fabd067de87049254e4d55d37d25d4df81f3130fb5f1",
+  "sha256": "a404456b9c1a873536580097afca6b5e41cbc16797751f0774c61372b078e639",
   "source_file": "seeds/generated/eval/degrades/DEG-2026-409.png",
   "split": "validation"
 }

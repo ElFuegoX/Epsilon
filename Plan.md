@@ -107,13 +107,13 @@ Documentation technique complète : **[`docs/EXTRACTION.md`](docs/EXTRACTION.md)
 ### Definition of done — Freud
 - [x] `python -m seed --as-of 2026-11-25` produit 120 documents annotés et le split 72/24/24 ; empreinte `7713f888568e6bd7e4a57dbd364ea3e27d7405d4c4e1e328218c5c8932cc6d20` (rendu v2 : colonnes, photos simulées).
 - [x] Toute valeur extraite non nulle porte page + bbox + méthode ; tout champ absent porte `ABSENT_DE_LA_PIECE`.
-- [x] Le test « zéro valeur inventée » passe sur l'IFU et l'échéance (`python -m unittest discover -s tests -t . -v`, 44 tests au vert dont 21 tests des briques optionnelles).
+- [x] Le test « zéro valeur inventée » passe sur l'IFU et l'échéance (`python -m unittest discover -s tests -t . -q`, 184 tests au vert, dont 21 tests des briques optionnelles et le parcours complet `tests/test_e2e.py`).
 - [x] Les hooks optionnels ne changent pas le contrat : `demo` reste hors ligne, un backend demandé mais absent lève une exception, et des `logprobs` absents ne sont jamais remplacés par une valeur par défaut.
 - [x] Le mode `demo` rejoue le même document avec le même résultat, sans réseau ; `cloud` sans `WEMA_LLM_URL` lève une exception au lieu d'inventer.
 - [x] L'extraction lit la pièce elle-même (pdfplumber pour les PDF, EasyOCR ou son cache pour les photos) et **jamais** la vérité du générateur ; les anciennes mesures (100 %) relisaient les blocs du générateur et sont retirées.
 - [x] `python -m seed --reset` charge la base (référentiels, 60 factures, 9 avoirs, 18 paiements, 96 pièces) ; `persister()` écrit `extracted_fields` aux chemins lus par `controls`.
 - [x] Cache EasyOCR complet (40 images, `seeds/ocr_cache/`) ; fiche IA réécrite avec la chaîne réelle : en-tête 96,4 %, F1 lignes 0,959, STP 69,2 %, 0 valeur inventée ; photos = classe faible (STP 6,7 %). Ablation « texte parfait » : 100 %.
-- [ ] Dockerfile : `COPY seeds ./seeds` à ajouter par Melon (cache OCR et vérités terrain dans l'image).
+- [x] Dockerfile : `COPY seeds ./seeds` (cache OCR et vérités terrain présents dans l'image).
 - [ ] Relecture humaine de la vérité terrain par Larissa (à faire ; la graine ne remplace pas une validation humaine).
 
 ---
@@ -123,10 +123,14 @@ Documentation technique complète : **[`docs/EXTRACTION.md`](docs/EXTRACTION.md)
 ### Principe directeur
 **Ne pas attendre Melon.** Jean-Marie code contre le contrat `docs/API.md`, pas contre l'API en cours d'écriture. Un seul interrupteur (`VITE_USE_MOCK`) choisit entre client HTTP réel et client fictif. Quand Melon aura terminé, on éteint le mock **sans toucher aux écrans**.
 
-### État de départ vérifié
-- `web/src/App.jsx` retourne `null` ; `web/src/api.js` ne contient que `API_URL` ; les 10 composants retournent `null`.
-- Aucune route de `docs/API.md` n'est encore implémentée côté Melon (toutes marquées `TODO Melon`).
-- `package.json` contient déjà React 18, Vite 5, Tailwind 3, PDF.js 4.
+### État de départ vérifié (historique, phase 0)
+- `web/src/App.jsx` retournait `null` ; `web/src/api.js` ne contenait que `API_URL` ; les 10 composants retournaient `null`.
+- `package.json` contient React 18, Vite 5, Tailwind 3, PDF.js 4.
+
+### État à la bascule (phase 5)
+- Toutes les routes de `docs/API.md` sont implémentées par Melon ; le front consomme l'API réelle par défaut (`VITE_USE_MOCK=true` garde la démo autonome).
+- `web/src/normalize.js` adapte les réponses réelles (référence, client, lignes, pageText) sans modifier les écrans.
+- `GET /documents/{id}/file` expose la pièce source immuable à la visionneuse PDF.js (avec en-tête `X-Role`).
 
 ### Phases
 
@@ -146,8 +150,9 @@ Documentation technique complète : **[`docs/EXTRACTION.md`](docs/EXTRACTION.md)
 - [x] **Phase 2** — `SourceViewer.jsx` (page simulée + overlay bbox, rendu PDF.js prêt dès qu'une URL sera fournie par Freud), `Inbox.jsx`, `Analysis.jsx` (clic sur `120 000` → surlignage de la ligne source, IFU absent + message de clarification).
 - [x] **Phase 3** — `Lines.jsx` (table éditable), `Controls.jsx` (9 anomalies simulées, résolution tracée), `Reconciliation.jsx` (ligne non livrée en rouge, décisions).
 - [x] **Phase 4** — `Preview.jsx`, `Validation.jsx` (double clic neutralisé), `Register.jsx` (facture + avoir total), `Referentials.jsx`, `Audit.jsx` (vérification de chaîne simulée).
-- [ ] **Phase 5** — en attente : API de Melon, bascule réelle sur le PDF généré par Freud (désormais disponible), `tests/test_e2e.py`, test portable/téléphone.
-- Point d'attention : `npm audit` signale 2 dépendances vulnérables (1 modérée, 1 élevée) à revoir avant la remise.
+- [x] **Phase 5** — bascule réelle effectuée : `VITE_USE_MOCK` vaut `false` par défaut, `tests/test_e2e.py` rejoue le parcours complet contre FastAPI (import du vrai PDF → extraction → IFU du référentiel → anomalies → validation → 409 au second clic → PDF figé → émission → avoir → chaîne d'audit). Visionneuse branchée sur `GET /documents/{id}/file`, téléchargements authentifiés via Blob.
+- [ ] Test portable / téléphone à faire avant la remise.
+- Point d'attention : `npm audit --omit=dev` → 0 vulnérabilité en production ; 2 avis **développement** (Vite 5) restent, la montée vers Vite 8 est reportée après la phase 5.
 
 ### Règles à ne jamais enfreindre
 - **Aucun calcul TVA dans le front** : on affiche ce que l'API renvoie. En cas de désaccord, l'API a raison.

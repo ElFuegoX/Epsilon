@@ -11,7 +11,7 @@ export default function Audit({ data, run, setNotice }) {
 
   const exportCsv = () => {
     if (!USE_MOCK) {
-      window.open(api.auditCsvUrl(), '_blank', 'noopener')
+      run(() => api.downloadAuditCsv())
       return
     }
     const header = 'id,horodatage,action,acteur,cible,hash'

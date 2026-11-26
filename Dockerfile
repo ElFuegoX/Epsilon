@@ -26,6 +26,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY config.py db.py schema.py schema.sql seed.py cli.py ./
+COPY seeds ./seeds
 COPY api ./api
 COPY domain ./domain
 COPY adapters ./adapters

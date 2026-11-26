@@ -12,7 +12,9 @@ import json
 import sqlite3
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Mapping
+from unittest.mock import patch
 
 from config import settings
 from domain.controls import Resolution, build_context
@@ -231,13 +233,18 @@ class TestValidation(unittest.TestCase):
         self.assertTrue(any(a.code == "INVALID_TAX" for a in attire.exception.anomalies))
         self.assertEqual(prochaine(conn, settings.prefixe_facture), 1)
 
-    def test_pdf_de_melon_indisponible_sans_injection(self) -> None:
+    def test_generateur_pdf_reel_sans_injection(self) -> None:
+        """Le générateur de Melon remplace l'ancien bouchon 'TODO Melon'."""
         conn = base()
-        with self.assertRaises(EtatInvalide) as attire:
-            validate_draft(conn, "d1", "larissa", idempotency_key="sans-pdf")
-        self.assertIn("TODO Melon", str(attire.exception))
-        self.assertEqual(conn.execute("SELECT COUNT(*) FROM invoices").fetchone()[0], 0)
-        self.assertEqual(prochaine(conn, settings.prefixe_facture), 1)
+        with TemporaryDirectory() as dossier:
+            with patch("domain.invoices.data_dir", return_value=Path(dossier)):
+                resultat = validate_draft(conn, "d1", "larissa", idempotency_key="sans-injection")
+            chemin = Path(dossier) / "pdf" / f"{resultat['numero']}.pdf"
+            self.assertTrue(chemin.is_file())
+            self.assertTrue(chemin.read_bytes().startswith(b"%PDF-"))
+            self.assertEqual(resultat["hash_pdf"], _hash(chemin))
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM invoices").fetchone()[0], 1)
+        self.assertEqual(prochaine(conn, settings.prefixe_facture), 2)
 
     def test_snapshot_conforme(self) -> None:
         conn = base()

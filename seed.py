@@ -24,6 +24,7 @@ import json
 import math
 import random
 import re
+import shutil
 import sys
 from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
@@ -881,11 +882,17 @@ def charger_base(manifest: Mapping[str, Any], extraire: bool = True,
                 if not piece["demo"]:
                     continue
                 chemin = RACINE / piece["fichier"]
+                empreinte = hashlib.sha256(chemin.read_bytes()).hexdigest()
+                # Copie immuable au même endroit que l'import réel : le worker
+                # retrouve ainsi la pièce, et l'API peut la servir à la visionneuse.
+                destination = db.data_dir() / "documents" / f"{empreinte}{chemin.suffix.lower()}"
+                if not destination.exists():
+                    shutil.copy2(chemin, destination)
                 conn.execute(
                     "INSERT INTO documents(id, type, nom, mime, taille, hash, pages, canal, statut, cree_le) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (piece["id"], piece["type"], chemin.name, MIMES[chemin.suffix.lower()],
-                     chemin.stat().st_size, hashlib.sha256(chemin.read_bytes()).hexdigest(), 1,
+                     chemin.stat().st_size, empreinte, 1,
                      piece["canal"], etats.IMPORTE, horodatage),
                 )
                 comptes["documents"] += 1

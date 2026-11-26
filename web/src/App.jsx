@@ -11,6 +11,7 @@ import Register from './components/Register'
 import Referentials from './components/Referentials'
 import Audit from './components/Audit'
 import { api, setRole, USE_MOCK, DEFAULT_ROLE } from './api.js'
+import { normalizeDocument, normalizeDraft, normalizeInvoice } from './normalize.js'
 import { fmt } from './utils.js'
 
 const TABS = [
@@ -66,8 +67,9 @@ export default function App() {
         api.clients(),
         api.items(),
       ])
-      const documents = unwrap(documentsRes)
-      const drafts = unwrap(draftsRes)
+      const clients = unwrap(clientsRes)
+      const documents = unwrap(documentsRes).map(normalizeDocument)
+      const drafts = unwrap(draftsRes).map((d) => normalizeDraft(d, documents, clients))
       const activeDraftId =
         preferredDraftId ||
         (drafts.some((d) => d.id === selectedDraftId) ? selectedDraftId : drafts[0]?.id) ||
@@ -86,9 +88,9 @@ export default function App() {
         documents,
         drafts,
         anomalies,
-        invoices: unwrap(invoicesRes),
+        invoices: unwrap(invoicesRes).map((i) => normalizeInvoice(i, clients)),
         audit: unwrap(auditRes),
-        clients: unwrap(clientsRes),
+        clients,
         items: unwrap(itemsRes),
       })
       if (activeDraftId && activeDraftId !== selectedDraftId) {

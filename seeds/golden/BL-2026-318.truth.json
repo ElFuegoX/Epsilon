@@ -72,7 +72,7 @@
     "vat": 232740
   },
   "reference": "BL-2026-318",
-  "sha256": "07cd840ee6424752979bc16701e9e883ea75a605b5878e685b7743e48392ea1d",
+  "sha256": "f9a71663f216d5d0f1053d305b05f746c02e666951b293d25440e29d2709bee2",
   "source_file": "seeds/generated/eval/livraisons/BL-2026-318.pdf",
   "split": "dev"
 }

@@ -11,7 +11,7 @@ import json
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Mapping, Optional
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, PlainTextResponse
@@ -49,7 +49,7 @@ from domain.invoices import (
     registre,
     validate_draft,
 )
-from domain.tax import Ligne, calculer, calculer_ligne, lignes_depuis_dict
+from domain.tax import CodeFiscal, Ligne, calculer, calculer_ligne, lignes_depuis_dict
 from worker.queue import enqueue_document, ingerer_document, process_document
 
 router = APIRouter()
@@ -102,7 +102,27 @@ def _serialize_document(conn, row) -> dict[str, Any]:
     doc["status"] = doc["statut"]
     doc["created_at"] = doc["cree_le"]
     doc["fields"] = fields
+    doc["url"] = f"/documents/{doc['id']}/file" if _source_file(doc) else None
     return doc
+
+
+def _source_file(doc: Mapping[str, Any]) -> Path | None:
+    """Copie immuable du fichier importé, retrouvée par son hash SHA-256."""
+    empreinte = str(doc.get("hash") or "")
+    if not empreinte:
+        return None
+    for candidat in (data_dir() / "documents").glob(f"{empreinte}.*"):
+        if candidat.is_file():
+            return candidat
+    return None
+
+
+def _referentiel_fiscal(conn) -> dict[str, CodeFiscal]:
+    """Codes fiscaux de la base : aucune valeur par défaut n'est inventée."""
+    return {
+        r["code"]: CodeFiscal(r["code"], int(r["taux_bp"]), bool(r["exoneration"]))
+        for r in conn.execute("SELECT code, taux_bp, exoneration FROM tax_codes")
+    }
 
 
 def _serialize_draft(conn, row) -> dict[str, Any]:
@@ -129,10 +149,12 @@ def _serialize_draft(conn, row) -> dict[str, Any]:
         if tot:
             imprime = {"ht": tot["printed_ht"], "vat": tot["printed_vat"], "ttc": tot["printed_ttc"]}
 
+    referentiel = _referentiel_fiscal(conn)
     calc = calculer(
-        lignes_depuis_dict(lignes),
+        lignes_depuis_dict(lignes, referentiel=referentiel),
         imprime=imprime or None,
         tolerance=settings.tolerance_arithmetique,
+        referentiel=referentiel,
     )
     deliveries = {
         int(r["numero"]): r["quantite_livree"]
@@ -315,6 +337,32 @@ def get_document(
         if row is None:
             raise HTTPException(status_code=404, detail=f"Pièce introuvable : {doc_id}")
         return _serialize_document(conn, row)
+    finally:
+        conn.close()
+
+
+@router.get("/documents/{doc_id}/file")
+def get_document_file(
+    doc_id: str,
+    role: str = Depends(require_roles("dirigeant", "assistante", "lecture")),
+):
+    """Sert la pièce source immuable pour la visionneuse (aucune valeur reconstruite)."""
+    conn = _conn()
+    try:
+        row = conn.execute("SELECT * FROM documents WHERE id=?", (doc_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail=f"Pièce introuvable : {doc_id}")
+        source = _source_file(dict(row))
+        if source is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Aucun fichier source conservé pour cette pièce (message saisi en texte).",
+            )
+        return FileResponse(
+            str(source),
+            media_type=row["mime"] or "application/octet-stream",
+            filename=row["nom"],
+        )
     finally:
         conn.close()
 

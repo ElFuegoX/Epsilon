@@ -15,7 +15,7 @@ export default function Register({ data, role, run, setNotice }) {
       setNotice({ type: 'info', text: 'Téléchargement PDF disponible dès que l’interface est connectée à l’API réelle.' })
       return
     }
-    window.open(api.invoicePdfUrl(invoice.id), '_blank', 'noopener')
+    run(() => api.downloadInvoicePdf(invoice.id, invoice.numero))
   }
 
   return (
