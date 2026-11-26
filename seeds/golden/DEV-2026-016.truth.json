@@ -85,7 +85,7 @@
     "vat": 266580
   },
   "reference": "DEV-2026-016",
-  "sha256": "ab0d5b5d81d6ed5cd1394b95f5bf433877b6fdac6b1ade27a4793b805a57b3c2",
+  "sha256": "24ca83401ce0bea94f8dd633bef38dd67741a989eca8716567be02fe7b788db0",
   "source_file": "seeds/generated/demo/devis/DEV-2026-016.pdf",
   "split": "dev"
 }

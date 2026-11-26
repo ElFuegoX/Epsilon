@@ -1,3 +1,13 @@
+---
+title: WEMA Facturation
+emoji: 🧾
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # WÉMA — atelier de facturation vérifiable
 
 > Prototype du cas pratique 2 (BWAI 2026). Une pièce entre — devis PDF, photo ou message —, une facture juste sort. **Aucune donnée manquante n'est inventée.**

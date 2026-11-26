@@ -12,7 +12,7 @@ const LABELS = {
   printed_ht: 'Total HT imprimé',
 }
 
-export default function SourceViewer({ document: doc, highlight, onSelectField }) {
+export default function SourceViewer({ document: doc, highlight, onSelectField, showTech = false }) {
   const canvasRef = useRef(null)
   const [pdfError, setPdfError] = useState('')
   const fields = doc?.fields || {}
@@ -90,8 +90,10 @@ export default function SourceViewer({ document: doc, highlight, onSelectField }
 
       {highlight && fields[highlight] && (
         <div className="mt-2 rounded bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          <strong>{LABELS[highlight] || highlight}</strong> · {money(fields[highlight].value)} · page {fields[highlight].page} · {fields[highlight].method}
-          {fields[highlight].motif && <em> — {fields[highlight].motif}</em>}
+          <strong>{LABELS[highlight] || highlight}</strong> · {typeof fields[highlight].value === 'number' && highlight !== 'reference' ? money(fields[highlight].value) : (fields[highlight].value || '— absent —')} · page {fields[highlight].page || 1}
+          {showTech && fields[highlight].method && <span> · méthode {fields[highlight].method}</span>}
+          {showTech && fields[highlight].confidence != null && <span> · {Math.round(fields[highlight].confidence * 100)} %</span>}
+          {fields[highlight].motif && <em> — absent de la pièce</em>}
         </div>
       )}
     </div>

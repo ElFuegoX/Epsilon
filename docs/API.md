@@ -2,23 +2,35 @@
 
 Responsable : **Melon** (écrit) / **Jean-Marie** (consomme). Toute modification doit être annoncée au point de synchronisation suivant.
 
-Base : `http://localhost:8000` · Documentation interactive : `/docs`.
-Rôle transmis par `X-Role: dirigeant | assistante | lecture` (simulation, jamais en production).
+Base locale : `http://localhost:8000` (ou port `7860` sur Hugging Face Spaces) · Documentation interactive : `/docs`.
+Rôle transmis par `X-Role: dirigeant | assistante | lecture` (simulation, défaut `lecture`, 403 si non autorisé).
+Idempotence : en-tête optionnel `Idempotency-Key` sur `POST /documents`, `POST /drafts/{id}/validate` et `POST /invoices/{id}/credit-notes`.
 
-| Endpoint | Rôle | Statut |
-|---|---|---|
-| `POST /documents`, `GET /documents/{id}` | Importer une pièce, consulter son état | TODO Melon |
-| `POST /documents/{id}/extract` | Lancer ou relancer une extraction | TODO Melon |
-| `GET /drafts`, `PATCH /drafts/{id}` | Lister et modifier un brouillon | TODO Melon |
-| `POST /drafts/{id}/lines`, `PATCH /lines/{id}` | Ajouter ou corriger une ligne | TODO Melon |
-| `GET /drafts/{id}/anomalies`, `POST /anomalies/{id}/resolve` | Contrôler et résoudre | TODO Melon |
-| `POST /drafts/{id}/clarification-message` | Message des champs manquants | TODO Melon |
-| `POST /drafts/{id}/validate` | Valider, numéroter, figer | TODO Melon |
-| `POST /invoices/{id}/issue` | Émettre sur un canal simulé | TODO Melon |
-| `POST /invoices/{id}/credit-notes` | Émettre un avoir lié | TODO Melon |
-| `GET /invoices`, `GET /invoices/{id}` | Registre et détail | TODO Melon |
-| `GET /audit`, `GET /audit/verify` | Journal et vérification de la chaîne | TODO Melon |
-| `POST /admin/reset` | Réinitialiser la démonstration | TODO Melon |
+| Endpoint | Rôle requis | Rôle fonctionnel | Statut |
+|---|---|---|---|
+| `GET /health` | Public | État de l'API, version, `ai_backend`, `as_of` | Implémenté |
+| `GET /documents`, `POST /documents`, `GET /documents/{id}` | Lecture / Assistante+ | Lister, importer (fichier multipart ou JSON `{nom, texte}`), consulter | Implémenté |
+| `POST /documents/{id}/extract` | Assistante+ | Mettre en file et exécuter l'extraction (idempotent) | Implémenté |
+| `GET /drafts`, `GET /drafts/{id}`, `PATCH /drafts/{id}` | Lecture / Assistante+ | Lister, consulter et modifier un brouillon (409 si déjà validé) | Implémenté |
+| `POST /drafts/{id}/lines`, `PATCH /lines/{id}` | Assistante+ | Ajouter ou corriger une ligne (recalcul via `domain/tax.py`) | Implémenté |
+| `GET /drafts/{id}/anomalies`, `POST /anomalies/{id}/resolve` | Lecture / Assistante+ | Contrôler (9 règles) et résoudre une anomalie avec trace | Implémenté |
+| `POST /drafts/{id}/clarification-message` | Assistante+ | Générer le message WhatsApp des champs manquants | Implémenté |
+| `POST /drafts/{id}/validate` | **Dirigeant** | Valider, numéroter, figer le snapshot et générer le PDF (422 si anomalie bloquante, 409 si état invalide) | Implémenté |
+| `GET /invoices`, `GET /invoices/{id}`, `GET /invoices/{id}/pdf` | Lecture | Registre, détail et téléchargement du PDF figé | Implémenté |
+| `PATCH /invoices/{id}`, `DELETE /invoices/{id}` | Assistante+ | Toujours refusé en `409 Conflict` (`INVOICE_IMMUTABLE`) | Implémenté |
+| `POST /invoices/{id}/issue` | Assistante+ | Émettre sur un canal simulé (`email_sim`, `whatsapp_sim`, `telechargement`) | Implémenté |
+| `POST /invoices/{id}/credit-notes` | **Dirigeant** | Émettre un avoir lié borné au TTC | Implémenté |
+| `GET /referentials/clients`, `POST /referentials/clients` | Lecture / **Dirigeant** | Consulter et créer un client | Implémenté |
+| `GET /referentials/items`, `POST /referentials/items` | Lecture / Assistante+ | Consulter et créer un article | Implémenté |
+| `GET /audit`, `GET /audit/verify`, `GET /audit/export.csv` | Lecture | Journal chaîné SHA-256, vérification d'intégrité et export CSV | Implémenté |
+| `POST /admin/reset` | **Dirigeant** | Réinitialiser la base et les fichiers générés (`AS_OF=2026-11-25`) | Implémenté |
+
+## Codes d'erreur standard
+
+- `403 Forbidden` : rôle absent/inconnu ou insuffisant pour l'action.
+- `404 Not Found` : ressource introuvable.
+- `409 Conflict` : doublon exact de document, brouillon déjà validé, ou tentative de modification/suppression d'une facture émise (`INVOICE_IMMUTABLE`).
+- `422 Unprocessable Entity` : anomalies bloquantes ouvertes à la validation, avoir dépassant le TTC, fichier ou canal invalide.
 
 ## Schéma d'extraction
 

@@ -100,7 +100,7 @@ export function resetMock() {
   return clone()
 }
 
-export function mockRequest(path, { method = 'GET', body } = {}) {
+export function mockRequest(path, { method = 'GET', body, formData } = {}) {
   const result = (value) => Promise.resolve(copy(value))
   const parts = path.split('/').filter(Boolean)
 
@@ -108,7 +108,55 @@ export function mockRequest(path, { method = 'GET', body } = {}) {
   if (path === '/admin/reset' && method === 'POST') { db = createInitialState(); return result({ reset: true }) }
 
   if (path === '/documents' && method === 'GET') return result({ items: db.documents })
-  if (path === '/documents' && method === 'POST') return result(db.documents[0])
+  if (path === '/documents' && method === 'POST') {
+    const file = formData?.get?.('file')
+    const filename = file?.name || body?.nom || `piece_${db.documents.length + 1}.txt`
+    const ref = filename.replace(/\.[^.]+$/, '')
+    const docId = `doc-${Date.now()}`
+    const draftId = `draft-${Date.now()}`
+    const rawText = body?.texte || `Fichier importé : ${filename}`
+    const newDoc = {
+      id: docId,
+      reference: ref,
+      type: body?.type || (file ? 'devis' : 'message'),
+      filename,
+      status: 'EN_ATTENTE_IA',
+      created_at: now,
+      hash: Math.abs(Array.from(filename + rawText).reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7)).toString(16).slice(0, 8),
+      fields: {
+        reference: { value: ref, page: 1, bbox: { x: 6, y: 8, w: 28, h: 4 }, method: 'ocr', confidence: 0.94 },
+        client_ifu: { value: null, motif: 'ABSENT_DE_LA_PIECE', page: 1, bbox: { x: 6, y: 24, w: 26, h: 4 }, method: 'llm', confidence: 0.0 },
+      },
+      pageText: [
+        { text: `PIÈCE : ${ref}`, y: 8 },
+        { text: rawText.slice(0, 90), y: 20 },
+      ],
+    }
+    db.documents.unshift(newDoc)
+    db.drafts.unshift({
+      id: draftId,
+      document_id: docId,
+      reference: ref,
+      date: '2026-11-25',
+      client: { name: '— absent de la pièce —', ifu: null, missing: ['client', 'ifu'] },
+      status: 'BROUILLON',
+      numero_previsionnel: `FAC-2026-${String(42 + db.drafts.length).padStart(5, '0')}`,
+      lines: [],
+      printed_totals: { ht: null, vat: null, ttc: null },
+      recalculated_totals: { ht: 0, vat: 0, ttc: 0 },
+      ecart: {},
+    })
+    db.anomalies.push({
+      id: `an-${Date.now()}`,
+      draft_id: draftId,
+      code: 'MISSING_MANDATORY',
+      severity: 'BLOQUANTE',
+      message: 'Mentions obligatoires absentes (client, IFU, lignes)',
+      field: 'client_ifu',
+      status: 'OUVERTE',
+    })
+    return result(newDoc)
+  }
   if (parts[0] === 'documents' && parts.length === 2 && method === 'GET') {
     return result(db.documents.find((d) => d.id === parts[1]) || null)
   }

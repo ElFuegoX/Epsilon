@@ -66,7 +66,7 @@
     "vat": 132120
   },
   "reference": "CMD-2026-117",
-  "sha256": "48f5f6266f357b8d39524af83c75f524ad474007c6aeccf282d7464943deef43",
+  "sha256": "ccfb64e5f8370552d629e781f750f9e5d053fd9520cab3dc74de4361008aafdb",
   "source_file": "seeds/generated/demo/photos/CMD-2026-117.png",
   "split": "dev"
 }

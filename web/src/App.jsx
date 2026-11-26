@@ -14,16 +14,16 @@ import { api, setRole, USE_MOCK, DEFAULT_ROLE } from './api.js'
 import { fmt } from './utils.js'
 
 const TABS = [
-  { id: 'inbox', label: "Boîte d'entrée" },
-  { id: 'analysis', label: 'Analyse' },
-  { id: 'lines', label: 'Lignes' },
-  { id: 'controls', label: 'Contrôles' },
-  { id: 'reconciliation', label: 'Rapprochement' },
-  { id: 'preview', label: 'Aperçu' },
-  { id: 'validation', label: 'Validation' },
-  { id: 'register', label: 'Registre' },
-  { id: 'referentials', label: 'Référentiels' },
-  { id: 'audit', label: 'Journal' },
+  { id: 'inbox', label: "Boîte d'entrée", group: 'workflow' },
+  { id: 'analysis', label: 'Analyse', group: 'workflow' },
+  { id: 'lines', label: 'Lignes', group: 'workflow' },
+  { id: 'controls', label: 'Contrôles', group: 'workflow' },
+  { id: 'reconciliation', label: 'Rapprochement', group: 'workflow' },
+  { id: 'preview', label: 'Aperçu', group: 'workflow' },
+  { id: 'validation', label: 'Validation', group: 'workflow' },
+  { id: 'register', label: 'Registre', group: 'global' },
+  { id: 'referentials', label: 'Référentiels', group: 'global' },
+  { id: 'audit', label: 'Journal', group: 'global' },
 ]
 
 const unwrap = (value) => (Array.isArray(value?.items) ? value.items : [])
@@ -32,35 +32,87 @@ export default function App() {
   const [tab, setTab] = useState('inbox')
   const [role, setRoleState] = useState(DEFAULT_ROLE)
   const [data, setData] = useState({ documents: [], drafts: [], anomalies: [], invoices: [], audit: [], clients: [], items: [] })
-  const [selectedDocumentId, setSelectedDocumentId] = useState('doc-041')
-  const [selectedDraftId, setSelectedDraftId] = useState('draft-041')
+  const [selectedDocumentId, setSelectedDocumentId] = useState(null)
+  const [selectedDraftId, setSelectedDraftId] = useState(null)
   const [highlight, setHighlight] = useState(null)
-  const [notice, setNotice] = useState('')
+  const [notice, setNoticeState] = useState(null)
 
-  const refresh = useCallback(async () => {
+  const setNotice = useCallback((value, explicitType = null) => {
+    if (!value) {
+      setNoticeState(null)
+      return
+    }
+    if (typeof value === 'object' && value.text) {
+      setNoticeState(value)
+      return
+    }
+    const text = String(value)
+    let type = explicitType
+    if (!type) {
+      if (/validée|résolue|prêt à copier|réinitialis|émise|créé/i.test(text)) type = 'success'
+      else if (/403|409|422|erreur|interdit|refus|impossible|introuvable|manquant/i.test(text)) type = 'error'
+      else type = 'info'
+    }
+    setNoticeState({ type, text })
+  }, [])
+
+  const refresh = useCallback(async (preferredDraftId = null) => {
     try {
-      const [documents, drafts, anomalies, invoices, audit, clients, items] = await Promise.all([
-        api.listDocuments(), api.listDrafts(), api.listAnomalies('draft-041'),
-        api.listInvoices(), api.audit(), api.clients(), api.items(),
+      const [documentsRes, draftsRes, invoicesRes, auditRes, clientsRes, itemsRes] = await Promise.all([
+        api.listDocuments(),
+        api.listDrafts(),
+        api.listInvoices(),
+        api.audit(),
+        api.clients(),
+        api.items(),
       ])
+      const documents = unwrap(documentsRes)
+      const drafts = unwrap(draftsRes)
+      const activeDraftId =
+        preferredDraftId ||
+        (drafts.some((d) => d.id === selectedDraftId) ? selectedDraftId : drafts[0]?.id) ||
+        null
+
+      let anomalies = []
+      if (activeDraftId) {
+        try {
+          anomalies = unwrap(await api.listAnomalies(activeDraftId))
+        } catch {
+          anomalies = []
+        }
+      }
+
       setData({
-        documents: unwrap(documents), drafts: unwrap(drafts), anomalies: unwrap(anomalies),
-        invoices: unwrap(invoices), audit: unwrap(audit), clients: unwrap(clients), items: unwrap(items),
+        documents,
+        drafts,
+        anomalies,
+        invoices: unwrap(invoicesRes),
+        audit: unwrap(auditRes),
+        clients: unwrap(clientsRes),
+        items: unwrap(itemsRes),
       })
+      if (activeDraftId && activeDraftId !== selectedDraftId) {
+        setSelectedDraftId(activeDraftId)
+      }
+      if (!selectedDocumentId && documents[0]?.id) {
+        setSelectedDocumentId(documents[0].id)
+      }
     } catch (error) {
       setNotice(error.message)
     }
-  }, [])
+  }, [selectedDraftId, selectedDocumentId])
 
   useEffect(() => { refresh() }, [refresh])
 
-  const run = useCallback(async (action) => {
+  const run = useCallback(async (action, { nextDraftId } = {}) => {
     setNotice('')
     try {
-      await action()
-      await refresh()
+      const result = await action()
+      await refresh(nextDraftId || result?.draft_id || null)
+      return result
     } catch (error) {
       setNotice(error.message || String(error))
+      return null
     }
   }, [refresh])
 
@@ -69,10 +121,15 @@ export default function App() {
     setRole(next)
   }
 
-  const openDocument = (id) => {
+  const openDocument = (id, explicitDraftId = null) => {
     setSelectedDocumentId(id)
-    const draft = data.drafts.find((d) => d.document_id === id)
-    if (draft) setSelectedDraftId(draft.id)
+    const linkedDraft = explicitDraftId
+      ? { id: explicitDraftId }
+      : data.drafts.find((d) => d.document_id === id)
+    if (linkedDraft?.id) {
+      setSelectedDraftId(linkedDraft.id)
+      refresh(linkedDraft.id)
+    }
     setHighlight(null)
     setTab('analysis')
   }
@@ -81,7 +138,16 @@ export default function App() {
   const draft = data.drafts.find((d) => d.id === selectedDraftId) || data.drafts[0]
   const invoice = data.invoices[0]
 
-  const shared = { data, run, notice, setNotice, go: setTab, fmt, highlight, setHighlight, document, draft, invoice }
+  const resetDemo = () => run(async () => {
+    await api.reset()
+    setSelectedDocumentId(null)
+    setSelectedDraftId(null)
+    setHighlight(null)
+    setTab('inbox')
+    setNotice({ type: 'success', text: 'Démonstration réinitialisée au propre.' })
+  })
+
+  const shared = { data, role, run, notice, setNotice, go: setTab, fmt, highlight, setHighlight, document, draft, invoice }
 
   const screens = {
     inbox: <Inbox {...shared} onOpen={openDocument} />,
@@ -96,6 +162,14 @@ export default function App() {
     audit: <Audit {...shared} />,
   }
 
+  const openAnomaliesCount = data.anomalies.filter((a) => a.status !== 'RESOLUE').length
+  const waitingDocsCount = data.documents.filter((d) => d.status === 'EN_ATTENTE_IA').length
+  const badges = {
+    inbox: waitingDocsCount > 0 ? { count: waitingDocsCount, tone: 'amber' } : null,
+    controls: openAnomaliesCount > 0 ? { count: openAnomaliesCount, tone: 'red' } : null,
+    register: data.invoices.length > 0 ? { count: data.invoices.length, tone: 'emerald' } : null,
+  }
+
   return (
     <Layout
       tabs={TABS}
@@ -103,8 +177,11 @@ export default function App() {
       onSelect={setTab}
       role={role}
       onRole={changeRole}
-      mode={USE_MOCK ? 'Mock déterministe' : `API ${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`}
+      onReset={resetDemo}
+      badges={badges}
+      mode={USE_MOCK ? 'Mode démo' : `API ${import.meta.env.VITE_API_URL || 'locale'}`}
       notice={notice}
+      onDismissNotice={() => setNotice(null)}
     >
       {screens[tab]}
     </Layout>

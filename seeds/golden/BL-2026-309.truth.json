@@ -72,7 +72,7 @@
     "vat": 198180
   },
   "reference": "BL-2026-309",
-  "sha256": "8aa0fec314e44bef8f35269b4282a6f6f3b522dee0889d44bac06c4c9922632e",
+  "sha256": "6389c1838b638ecbed2f9f94f6c10c80458cb20dde41d94c6261c99434b35581",
   "source_file": "seeds/generated/demo/livraisons/BL-2026-309.pdf",
   "split": "validation"
 }
