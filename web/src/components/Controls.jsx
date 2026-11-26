@@ -1,19 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../api.js'
-import { statusColor } from '../utils.js'
+import { copyToClipboard, statusColor } from '../utils.js'
 
 export default function Controls({ data, draft, run, setNotice, setHighlight, go }) {
   const [resolvingId, setResolvingId] = useState(null)
   const [justification, setJustification] = useState('')
+  const [copied, setCopied] = useState(false)
 
   const openCount = data.anomalies.filter((a) => a.status !== 'RESOLUE').length
+
+  useEffect(() => { setCopied(false) }, [draft?.id])
 
   const copyClarification = async () => {
     if (!draft?.id) return
     await run(async () => {
       const { message } = await api.clarificationMessage(draft.id)
-      try { await navigator.clipboard.writeText(message) } catch { /* presse-papiers indisponible */ }
-      setNotice({ type: 'success', text: `Message prêt à copier : ${message}` })
+      const ok = await copyToClipboard(message)
+      setCopied(ok)
+      setNotice(ok ? null : { type: 'error', text: `Copie impossible sur cet appareil. Copiez manuellement : ${message}` })
     })
   }
 
@@ -153,7 +157,7 @@ export default function Controls({ data, draft, run, setNotice, setHighlight, go
             disabled={!draft?.id}
             className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 disabled:opacity-50"
           >
-            Copier le message
+            {copied ? 'Copié' : 'Copier le message'}
           </button>
           <button
             type="button"

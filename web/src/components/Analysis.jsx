@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import SourceViewer from './SourceViewer'
 import { api } from '../api.js'
-import { money } from '../utils.js'
+import { copyToClipboard, money } from '../utils.js'
 
 const LABELS = {
   reference: 'Référence',
@@ -24,13 +24,17 @@ function reliabilityBadge(score, absent) {
 
 export default function Analysis({ document: doc, draft, highlight, setHighlight, run, setNotice, go }) {
   const [showTech, setShowTech] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => { setCopied(false) }, [draft?.id])
 
   const copyClarification = async () => {
     if (!draft?.id) return
     await run(async () => {
       const { message } = await api.clarificationMessage(draft.id)
-      try { await navigator.clipboard.writeText(message) } catch { /* presse-papiers indisponible */ }
-      setNotice({ type: 'success', text: `Message prêt à copier : ${message}` })
+      const ok = await copyToClipboard(message)
+      setCopied(ok)
+      setNotice(ok ? null : { type: 'error', text: `Copie impossible sur cet appareil. Copiez manuellement : ${message}` })
     })
   }
 
@@ -128,7 +132,7 @@ export default function Analysis({ document: doc, draft, highlight, setHighlight
                 onClick={copyClarification}
                 className="mt-3 w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
               >
-                Copier le message WhatsApp de demande d’IFU
+                {copied ? 'Copié' : 'Copier le message WhatsApp de demande d’IFU'}
               </button>
             </div>
           )}
