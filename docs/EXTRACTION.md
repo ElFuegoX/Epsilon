@@ -317,6 +317,9 @@ la lecture. Seuls les chiffres de la chaîne réelle sont annoncés comme résul
 
 ### Melon (API, worker, base)
 
+> **Maillon extraction → brouillon** et confirmations avant validation : voir
+> [`BROUILLON.md`](BROUILLON.md) (`creer_brouillon`, `exiger_confirmations`).
+
 ```python
 from adapters.ocr import OCRIndisponible
 from domain.extraction import ExtractionInvalide, extraire_piece, persister

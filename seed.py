@@ -901,9 +901,10 @@ def _extraire_pieces(manifest: Mapping[str, Any], db_path: str | None) -> dict[s
     import db
     from adapters.ocr import OCRIndisponible
     from domain import documents as etats
+    from domain.brouillon import creer_brouillon
     from domain.extraction import ExtractionInvalide, extraire_piece, persister
 
-    comptes = {"extraits": 0, "en_attente": 0}
+    comptes = {"extraits": 0, "en_attente": 0, "brouillons": 0}
     conn = db.connect(db_path)
     try:
         for piece in manifest["_pieces"]:
@@ -921,7 +922,9 @@ def _extraire_pieces(manifest: Mapping[str, Any], db_path: str | None) -> dict[s
             with db.transaction(conn):
                 persister(conn, piece["id"], payload)
                 conn.execute("UPDATE documents SET statut=? WHERE id=?", (etats.EXTRAIT, piece["id"]))
+                creer_brouillon(conn, piece["id"], payload)  # maillon extraction -> brouillon
             comptes["extraits"] += 1
+            comptes["brouillons"] += 1
     finally:
         conn.close()
     return comptes
@@ -952,7 +955,8 @@ def main(argv: list[str] | None = None) -> int:
         comptes = charger_base(manifest, extraire=not args.sans_extraction)
         print(
             f"Base : {comptes['documents']} pièces chargées, {comptes.get('extraits', 0)} extraites, "
-            f"{comptes.get('en_attente', 0)} en attente d'OCR ; 60 factures, 9 avoirs, 18 paiements."
+            f"{comptes.get('en_attente', 0)} en attente d'OCR, {comptes.get('brouillons', 0)} brouillons ; "
+            f"60 factures, 9 avoirs, 18 paiements."
         )
     return 0
 

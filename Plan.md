@@ -114,6 +114,9 @@ Documentation technique complète : **[`docs/EXTRACTION.md`](docs/EXTRACTION.md)
 - [x] `python -m seed --reset` charge la base (référentiels, 60 factures, 9 avoirs, 18 paiements, 96 pièces) ; `persister()` écrit `extracted_fields` aux chemins lus par `controls`.
 - [x] Cache EasyOCR complet (40 images, `seeds/ocr_cache/`) ; fiche IA réécrite avec la chaîne réelle : en-tête 96,4 %, F1 lignes 0,959, STP 69,2 %, 0 valeur inventée ; photos = classe faible (STP 6,7 %). Ablation « texte parfait » : 100 %.
 - [ ] Dockerfile : `COPY seeds ./seeds` à ajouter par Melon (cache OCR et vérités terrain dans l'image).
+- [x] Maillon extraction → brouillon (`domain/brouillon.py`, `docs/BROUILLON.md`) : brouillon BROUILLON idempotent, client C1/C2, livraisons, valeurs non lues déduites puis à confirmer, `exiger_confirmations` avant `validate_draft`. `seed --reset` crée 96 brouillons. **À valider avec Larissa et Melon.**
+- [x] Outillage de la mesure contre la méthode de référence (`domain/reference.py`, `docs/PROTOCOLE_REFERENCE.md`) : 20 pièces hors jeu de développement, fiches dans `seeds/reference/`.
+- [ ] **Faire la saisie manuelle chronométrée** des 20 pièces (idéalement par une personne extérieure), puis `python -m domain.reference comparer`.
 - [ ] Relecture humaine de la vérité terrain par Larissa (à faire ; la graine ne remplace pas une validation humaine).
 
 ---
