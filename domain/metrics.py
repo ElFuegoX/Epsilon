@@ -119,8 +119,85 @@ def _cueils_anomalies(truth: Mapping[str, Any], payload: Mapping[str, Any]) -> s
     return detects
 
 
+CHAMPS_REVUE_TETE = ("reference", "client.name", "client.ifu", "dates.issue",
+                     "payment_terms.text", "payment_terms.days")
+CHAMPS_REVUE_LIGNE = ("quantity", "unit_price_ht", "line_total_ht")
+
+
+def charger_clients() -> list[dict[str, Any]] | None:
+    """Référentiel clients du corpus, pour le signal de cohérence (docs/CONFIANCE.md)."""
+    chemin = RACINE / "seeds" / "generated" / "clients.json"
+    if not chemin.is_file():
+        return None
+    return json.loads(chemin.read_text(encoding="utf-8"))
+
+
+def juger_revue(truth: Mapping[str, Any], payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Chaque valeur à juger : juste / absente / fausse, et envoyée en revue ou acceptée.
+
+    Une valeur est « en revue » si elle est absente ou sous son seuil de
+    confiance. C'est la mesure qui dit si le seuil fait son travail : une
+    valeur fausse acceptée est une erreur silencieuse.
+    """
+    cas: list[tuple[str, Any, Any]] = []
+    for nom in CHAMPS_REVUE_TETE:
+        cas.append((nom, (truth.get("fields") or {}).get(nom), _objet_champ(payload, nom)))
+    for nom in TOTAUX_IMPRIMES:
+        attendu = (truth.get("printed_totals") or {}).get(nom)
+        if attendu is not None:
+            cas.append((f"totals.printed_{nom}", attendu, _objet_champ(payload, f"totals.printed_{nom}")))
+    lignes_lues = payload.get("lines", [])
+    for index, ligne in enumerate(truth.get("lines", [])):
+        lue = lignes_lues[index] if index < len(lignes_lues) else {}
+        for nom in CHAMPS_REVUE_LIGNE:
+            cas.append((f"lines.{nom}", ligne.get(nom), lue.get(nom)))
+    resultats = []
+    for chemin, attendu, champ in cas:
+        champ = champ or {}
+        observe = extraction.valeur(champ)
+        if attendu is None and observe is None:
+            continue  # absent de la pièce et déclaré absent : rien à juger
+        en_revue = bool(champ.get("missing")) or \
+            float(champ.get("confidence", 0.0) or 0.0) < extraction.seuil(chemin)
+        if egal(attendu, observe):
+            etat = "juste"
+        elif observe is None:
+            etat = "absente"
+        else:
+            etat = "fausse"
+        resultats.append({"document": truth["reference"], "champ": chemin, "etat": etat,
+                          "revue": en_revue, "attendu": attendu, "observe": observe,
+                          "confiance": champ.get("confidence")})
+    return resultats
+
+
+def _resume_revue(jugements: list[dict[str, Any]]) -> dict[str, Any]:
+    compte = Counter((j["etat"], "revue" if j["revue"] else "acceptee") for j in jugements)
+    erreurs = [j for j in jugements if j["etat"] != "juste"]
+    attrapees = sum(1 for j in erreurs if j["revue"])
+    justes = [j for j in jugements if j["etat"] == "juste"]
+    silencieuses = [j for j in erreurs if not j["revue"]]
+    par_champ: dict[str, Counter[str]] = {}
+    for j in jugements:
+        par_champ.setdefault(j["champ"], Counter())[
+            f"{j['etat']}_{'revue' if j['revue'] else 'acceptee'}"] += 1
+    return {
+        "valeurs_jugees": len(jugements),
+        "matrice": {f"{etat}_{decision}": n for (etat, decision), n in sorted(compte.items())},
+        "erreurs": len(erreurs),
+        "erreurs_attrapees": attrapees,
+        "rappel_revue": round(attrapees / len(erreurs), 4) if erreurs else 1.0,
+        "erreurs_silencieuses": len(silencieuses),
+        "fausses_alertes": sum(1 for j in justes if j["revue"]),
+        "taux_fausses_alertes": round(sum(1 for j in justes if j["revue"]) / len(justes), 4) if justes else 0.0,
+        "exemples_silencieux": silencieuses[:10],
+        "par_champ": {nom: dict(c) for nom, c in sorted(par_champ.items())},
+    }
+
+
 def evaluer(dossier: Path | None = None, backend: str = "demo",
-            ecrire: bool = True, ocr_backend: str = "auto", split: str | None = None) -> dict[str, Any]:
+            ecrire: bool = True, ocr_backend: str = "auto", split: str | None = None,
+            clients: list[dict[str, Any]] | None = None, avec_referentiel: bool = True) -> dict[str, Any]:
     """Exécute l'extraction sur tout le corpus annoté et calcule les mesures."""
     truths = charger_truths(dossier)
     if split:
@@ -144,10 +221,15 @@ def evaluer(dossier: Path | None = None, backend: str = "demo",
     erreurs: list[dict[str, Any]] = []
     confiances_basses: list[dict[str, Any]] = []
     familles: dict[str, dict[str, int]] = {}
+    jugements: list[dict[str, Any]] = []
+    if clients is None and avec_referentiel:
+        clients = charger_clients()
 
     for truth in truths:
         chemin = RACINE / truth["source_file"]
-        payload = extraction.extraire_piece(chemin, backend=backend, ocr_backend=ocr_backend)
+        payload = extraction.extraire_piece(chemin, backend=backend, ocr_backend=ocr_backend,
+                                            clients=clients)
+        jugements.extend(juger_revue(truth, payload))
         famille = familles.setdefault(truth.get("family", truth["document_type"]), {
             "documents": 0, "champs_bons": 0, "champs_total": 0, "tp": 0, "fp": 0, "fn": 0, "stp": 0,
         })
@@ -287,6 +369,8 @@ def evaluer(dossier: Path | None = None, backend: str = "demo",
         "erreurs_par_champ": dict(sorted(Counter(e["champ"] for e in erreurs).items())),
         "alertes_confiance": len(confiances_basses),
         "par_famille": {nom: _resume_famille(f) for nom, f in sorted(familles.items())},
+        "referentiel_clients": bool(clients),
+        "revue": _resume_revue(jugements),
     }
     if ecrire and dossier is None:
         SORTIE.parent.mkdir(parents=True, exist_ok=True)
@@ -354,6 +438,19 @@ def render_markdown(m: Mapping[str, Any]) -> str:
     for nom, f in m.get("par_famille", {}).items():
         lignes.append(f"| {nom} | {f['documents']} | {f['exactitude_champs']:.1%} | {f['f1_lignes']:.4f} | {f['stp']:.1%} |")
     lignes += ["", f"Écarts relevés : {m.get('erreurs_par_categorie', {})} · alertes de confiance : {m.get('alertes_confiance', 0)}"]
+    r = m.get("revue")
+    if r:
+        lignes += ["", "## Le seuil fait-il son travail ? (valeurs jugées une à une)", "",
+                   f"- Valeurs jugées : {r['valeurs_jugees']} · référentiel clients : "
+                   f"{'oui' if m.get('referentiel_clients') else 'non'}",
+                   f"- Erreurs attrapées par la revue : **{r['erreurs_attrapees']}/{r['erreurs']}** "
+                   f"({r['rappel_revue']:.1%}) · **erreurs silencieuses : {r['erreurs_silencieuses']}**",
+                   f"- Fausses alertes (valeur juste envoyée en revue) : {r['fausses_alertes']} "
+                   f"({r['taux_fausses_alertes']:.1%} des valeurs justes)", "",
+                   "| | En revue | Acceptée |", "|---|---:|---:|"]
+        for etat in ("juste", "absente", "fausse"):
+            lignes.append(f"| {etat} | {r['matrice'].get(etat + '_revue', 0)} | "
+                          f"{r['matrice'].get(etat + '_acceptee', 0)} |")
     lignes += ["", "## 30 points d'attention analysés (écarts puis alertes)", "",
                "| Document | Catégorie | Champ | Attendu | Observé | Confiance |",
                "|---|---|---|---|---|---:|"]

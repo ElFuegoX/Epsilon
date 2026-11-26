@@ -910,7 +910,8 @@ def _extraire_pieces(manifest: Mapping[str, Any], db_path: str | None) -> dict[s
             if not piece["demo"]:
                 continue
             try:
-                payload = extraire_piece(RACINE / piece["fichier"], backend="demo", ocr_backend="cache")
+                payload = extraire_piece(RACINE / piece["fichier"], backend="demo", ocr_backend="cache",
+                                         clients=manifest["_donnees"]["clients"])
             except (OCRIndisponible, ExtractionInvalide):
                 statut = etats.EN_ATTENTE_IA
                 comptes["en_attente"] += 1

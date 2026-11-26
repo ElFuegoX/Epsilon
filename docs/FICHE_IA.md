@@ -19,7 +19,7 @@ Détail technique : [`EXTRACTION.md`](EXTRACTION.md). Détail machine : `seeds/g
 | Séparation des jeux | 72 dev / 24 validation / 24 test, stratifiés par famille. Graine `20261125`, `AS_OF=2026-11-25`. Empreinte du manifeste : `7713f888568e6bd7e4a57dbd364ea3e27d7405d4c4e1e328218c5c8932cc6d20`. |
 | Annotation | Vérité terrain écrite par le générateur au moment du rendu (`seeds/golden/*.truth.json`) : en-tête, lignes, quantités livrées, montants imprimés et recalculés séparés. **Relecture humaine de Larissa encore à faire.** |
 | Méthode d'évaluation | `python -m domain.metrics` : exactitude par champ d'en-tête, F1 des lignes (désignation + quantité + unité + PU), exactitude des totaux imprimés, STP (document lu sans aucune correction), rappel des anomalies injectées, décompte des valeurs inventées, matrice de confusion des types, détail par famille. |
-| Seuils de revue | 0,80 par défaut ; 0,90 pour l'IFU, la TVA et les totaux ; 0,95 pour les numéros. Un champ sous son seuil ou absent part en revue humaine. L'IA ne valide jamais seule. |
+| Seuils de revue | 0,80 par défaut ; 0,90 pour l'IFU, la TVA et les totaux ; 0,95 pour les numéros. Un champ sous son seuil ou absent part en revue humaine. L'IA ne valide jamais seule. Confiance = 0,30 × OCR + 0,40 × solidité de la règle + 0,30 × cohérence (lignes, totaux, référentiel clients) : voir [`CONFIANCE.md`](CONFIANCE.md). Poids et seuils **non calibrés** sur le jeu de validation. |
 | Responsable | Freud — Données & IA. Dernière mesure : 26/11/2026. Relecture : Larissa, à programmer. |
 
 ## Résultats observés — chaîne réelle, 120 documents
@@ -64,6 +64,22 @@ de test compris (en-tête `Qté` lu `Ote`, ponctuation doublée `IFU: :`, zéros
 n'est donc pas « jamais regardé » au sens du blueprint. Avec 6 photos par jeu, les écarts entre
 jeux relèvent surtout du bruit d'échantillonnage.
 
+### Le seuil de revue fait-il son travail ?
+
+Chaque valeur (1 563 au total) est jugée juste, absente ou fausse, puis croisée avec la
+décision « envoyée en revue » ou « acceptée ». Le détail est dans [`CONFIANCE.md`](CONFIANCE.md).
+
+| Valeur | En revue | Acceptée |
+|---|---:|---:|
+| juste | 270 (17,8 %, fausses alertes) | 1 245 |
+| absente | 13 | 0 |
+| fausse | 35 | **0** |
+
+**48 erreurs sur 48 envoyées en revue : 0 erreur silencieuse.** Avant les corrections du 26/11
+(signal « modèle » constant, pas de comparaison au référentiel), 35 noms mal lus étaient acceptés
+avec une confiance de 0,85 à 0,95. Le prix de cette garantie : sur les photos, la plupart des
+montants corrigés (« O » lu à la place de « 0 ») sont soumis à confirmation.
+
 ### Rattachement client malgré les erreurs de lecture
 
 Sur les 40 images, `match_client` (règles de Larissa) retrouve le bon client dans **37 cas**
@@ -74,7 +90,7 @@ rattachement à un mauvais client.**
 
 | Catégorie | Volume | Exemple | Ce que fait le système |
 |---|---:|---|---|
-| **Confusion i → l dans les noms** | 35 documents (toutes des images) | `CMD-2026-101` : « Maison Hounsa Boot en Bois » lu « Malson Hounsa Boot en Bols » | Le nom est rapporté tel que lu : l'extraction ne le corrige pas. Le rattachement par IFU retrouve le client (37/40). |
+| **Confusion i → l dans les noms** | 35 documents (toutes des images) | `CMD-2026-101` : « Maison Hounsa Boot en Bois » lu « Malson Hounsa Boot en Bols » | Le nom est rapporté tel que lu : l'extraction ne le corrige pas. Comme il ressemble à un client connu sans lui être identique, sa cohérence tombe à 0,30 et il part en **revue** (35/35). Le rattachement par IFU retrouve le client (37/40). |
 | **Chiffre isolé non détecté** | 11 quantités (« 4 » ou « 1 ») | `CMD-2026-114` : quantités des lignes 1 et 2 absentes | La quantité ressort **absente** (`ABSENT_DE_LA_PIECE`) et la ligne part en revue. Aucune quantité n'est devinée, aucune n'est fausse. |
 | **Cellule masquée par un tampon** | 2 unités | `DEG-2026-409` : unités `pcs` et `jour` non lues | Unité absente, revue. |
 | **Zéros lus comme des « O »** | fréquent (`192 OOO`, `1 276 0OO`) | `CMD-2026-101` | Corrigé **uniquement à l'intérieur d'un nombre** ; la lecture d'origine reste traçable (`lu`). |
@@ -127,7 +143,8 @@ pip install -r requirements-ocr.txt && python -m adapters.ocr --warm --force
 > « Sur 120 documents annotés, l'extraction atteint 96 % sur les champs d'en-tête et un F1 de 0,96
 > sur les lignes, avec **zéro valeur inventée**. Les PDF passent sans correction ; les photos sont
 > notre point faible : sur les images, presque chaque document demande une revue. Mais quand
-> l'OCR ne lit pas une quantité, elle ressort vide, jamais fausse. »
+> l'OCR ne lit pas une quantité, elle ressort vide, jamais fausse. Et sur 1 563 valeurs jugées, les
+> 48 erreurs de lecture ont toutes été envoyées en revue : aucune ne passe en silence. »
 
 Ce que l'on ne dit pas : que l'IA lit tous les documents, qu'elle calcule la TVA, ou que les
 chiffres des PDF valent pour des photos.

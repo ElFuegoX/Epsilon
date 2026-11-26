@@ -147,9 +147,135 @@ def _capturer(segments: Sequence[Mapping[str, Any]], expression: re.Pattern[str]
 
 
 def _item(brut: Any, bloc: Mapping[str, Any] | None, *, absent: bool = False,
-          coherence: float | None = None) -> dict[str, Any]:
-    signal = coherence if coherence is not None else 0.9
-    return {"raw": brut, "bloc": bloc, "missing": absent, "coherence": float(signal)}
+          coherence: float | None = None, modele: float | None = None) -> dict[str, Any]:
+    """Valeur brute + bloc d'origine + deux signaux de confiance.
+
+    ``modele`` : solidité de la règle qui a trouvé la valeur (voir docs/CONFIANCE.md).
+    ``coherence`` : la valeur se tient-elle avec le reste de la pièce et le référentiel ?
+    """
+    item = {"raw": brut, "bloc": bloc, "missing": absent,
+            "coherence": float(coherence if coherence is not None else 0.9)}
+    if modele is not None:
+        item["modele"] = round(float(modele), 4)
+    return item
+
+
+# --------------------------------------------------------------------------
+# Signal « modèle » : solidité de la règle qui a trouvé la valeur.
+# Le structureur est fait de règles : il n'a pas de probabilité à fournir,
+# mais il sait s'il a trouvé la valeur proprement ou en rattrapant une
+# lecture imparfaite. Barème documenté dans docs/CONFIANCE.md.
+# --------------------------------------------------------------------------
+
+MODELE_NET = 0.95          # libellé lu tel quel, valeur au format attendu
+MODELE_TOLERANT = 0.75     # libellé reconnu seulement grâce à la tolérance OCR (« Cllent », « 1FU »)
+MODELE_CORRIGE = 0.65      # valeur dont des lettres ont été converties en chiffres (« 192 OOO »)
+MODELE_POSITION_MIN = 0.70  # cellule rangée dans sa colonne à la limite de la tolérance
+MODELE_DESCRIPTION = 0.90  # texte libre : la règle ne peut pas le vérifier
+MODELE_UNITE_INCONNUE = 0.60
+
+LIBELLES_NETS = {
+    "client.name": re.compile(r"\b(?:Client|Destinataire)\s*:", re.I),
+    "client.ifu": re.compile(r"\bIFU\s*:\s*\d"),
+    "dates.issue": re.compile(r"\bDate\s*:\s*\d{4}-\d{2}-\d{2}\b"),
+    "payment_terms.text": re.compile(r"\bConditions\s*:", re.I),
+    "printed_ht": re.compile(r"\bTotal HT\s*:\s*\d[\d ]*\d\b"),
+    "printed_vat": re.compile(r"\bTVA \d+ %\s*:\s*\d[\d ]*\d\b"),
+    "printed_ttc": re.compile(r"\bTotal TTC\s*:\s*\d[\d ]*\d\b"),
+}
+EN_TETES_NETS = {"n", "no", "designation", "qte", "quantite", "unite", "pu", "prix",
+                 "remise", "tva", "total", "montant", "livre", "ht"}
+
+
+def _modele_libelle(chemin: str, segment: Mapping[str, Any] | None) -> float:
+    """0,95 si le libellé et la valeur sont lus nets, 0,75 s'il a fallu la tolérance OCR."""
+    if not segment:
+        return MODELE_TOLERANT
+    motif = LIBELLES_NETS.get(chemin)
+    texte = " ".join(str(m["text"]) for m in segment.get("words") or []) or str(segment.get("text", ""))
+    if motif is None or motif.search(texte):
+        return MODELE_NET
+    return MODELE_TOLERANT
+
+
+def _modele_cellule(distance: float | None, mots: Sequence[Mapping[str, Any]],
+                    colonne_nette: bool) -> float:
+    """Cellule numérique : position sous l'en-tête, en-tête lu net, chiffres non corrigés."""
+    score = MODELE_NET
+    if distance is not None and distance > 1.0:
+        # 0,95 à 1 % du bord de colonne, 0,70 à la limite de tolérance (3,5 %)
+        ecart = min(1.0, (distance - 1.0) / (TOLERANCE_COLONNE - 1.0))
+        score = MODELE_NET - ecart * (MODELE_NET - MODELE_POSITION_MIN)
+    if not colonne_nette:
+        score = min(score, 0.85)
+    if any("lu" in mot for mot in mots):
+        score = min(score, MODELE_CORRIGE)
+    return score
+
+
+# --------------------------------------------------------------------------
+# Cohérence avec le référentiel clients
+# --------------------------------------------------------------------------
+
+COHERENCE_CONNUE = 0.98      # identique à un client du référentiel
+COHERENCE_PRESQUE = 0.30     # ressemble à un client connu sans être identique : lecture suspecte
+COHERENCE_NOUVELLE = 0.70    # ne ressemble à aucun client : client nouveau possible
+COHERENCE_CONTRADICTION = 0.30  # IFU d'un client, nom d'un autre
+COHERENCE_SANS_REFERENTIEL = 0.90  # rien à comparer : signal neutre
+SEUIL_RESSEMBLANCE = 0.80
+
+
+def _coherence_client(nom: str | None, ifu: str | None,
+                      clients: Sequence[Mapping[str, Any]] | None) -> tuple[float, float, dict[str, Any]]:
+    """Cohérence du nom et de l'IFU lus avec le référentiel clients.
+
+    Ne corrige rien et ne rattache rien : le rattachement reste à
+    ``matching.match_client`` (Larissa). On mesure seulement si la lecture
+    est plausible. Un nom à 90 % identique à un client connu est presque
+    toujours une lecture fautive (« Malson » pour « Maison ») : on le fait
+    regarder. Retourne (cohérence du nom, cohérence de l'IFU, diagnostic).
+    """
+    if not clients:
+        return COHERENCE_SANS_REFERENTIEL, 0.95, {"referentiel": False}
+    from domain.matching import similarite
+
+    nom_norm = norm.normalize_text(nom)
+    par_nom = {norm.normalize_text(c.get("raison_sociale")): c for c in clients}
+    par_ifu = {str(c["ifu"]): c for c in clients if c.get("ifu")}
+    diagnostic: dict[str, Any] = {"referentiel": True}
+
+    client_nom = par_nom.get(nom_norm) if nom_norm else None
+    if not nom_norm:
+        coherence_nom = COHERENCE_SANS_REFERENTIEL
+    elif client_nom is not None:
+        coherence_nom = COHERENCE_CONNUE
+        diagnostic["nom"] = "identique"
+    else:
+        meilleur = max(clients, key=lambda c: similarite(nom or "", c.get("raison_sociale") or ""))
+        ressemblance = similarite(nom or "", meilleur.get("raison_sociale") or "")
+        diagnostic["ressemblance"] = ressemblance
+        if ressemblance >= SEUIL_RESSEMBLANCE:
+            coherence_nom = COHERENCE_PRESQUE
+            diagnostic["nom"] = "presque_identique"
+        else:
+            coherence_nom = COHERENCE_NOUVELLE
+            diagnostic["nom"] = "inconnu"
+
+    if not ifu:
+        coherence_ifu = 0.95
+    elif ifu in par_ifu:
+        client_ifu = par_ifu[ifu]
+        if client_nom is not None and client_nom.get("id") != client_ifu.get("id"):
+            coherence_ifu = COHERENCE_CONTRADICTION
+            coherence_nom = min(coherence_nom, COHERENCE_CONTRADICTION)
+            diagnostic["ifu"] = "contradiction_nom"
+        else:
+            coherence_ifu = COHERENCE_CONNUE
+            diagnostic["ifu"] = "connu"
+    else:
+        coherence_ifu = COHERENCE_NOUVELLE
+        diagnostic["ifu"] = "inconnu"
+    return coherence_nom, coherence_ifu, diagnostic
 
 
 def classer(blocs: Sequence[Mapping[str, Any]], indice: str | None = None) -> str:
@@ -182,7 +308,8 @@ NOMBRE_RE = re.compile(r"^\d+(?:[.,]\d+)?$")
 def _entete_tableau(blocs: Sequence[Mapping[str, Any]]) -> tuple[int, dict[str, list[float]]] | None:
     """Repère la ligne d'en-tête et la position (redressée) de chaque colonne."""
     for index, bloc in enumerate(blocs):
-        colonnes: dict[str, list[float]] = {}
+        colonnes: dict[str, Any] = {}
+        nettes: set[str] = set()  # en-têtes lus tels quels, sans tolérance OCR
         derniere: str | None = None
         for mot in bloc.get("words") or []:
             texte = norm.normalize_text(mot["text"])
@@ -193,9 +320,12 @@ def _entete_tableau(blocs: Sequence[Mapping[str, Any]]) -> tuple[int, dict[str, 
             for cle, motif in EN_TETES:
                 if cle not in colonnes and motif.match(texte):
                     colonnes[cle] = [float(mot["xr"][0]), float(mot["xr"][1])]
+                    if texte in EN_TETES_NETS:
+                        nettes.add(cle)
                     derniere = cle
                     break
         if "description" in colonnes and ({"unit_price_ht", "line_total_ht"} & colonnes.keys()):
+            colonnes["_nettes"] = nettes
             return index, colonnes
     return None
 
@@ -269,8 +399,9 @@ def _coherence_ligne(cellules: Mapping[str, str | None]) -> float:
 
 
 def _lignes_tableau(blocs: Sequence[Mapping[str, Any]], debut: int,
-                    colonnes: Mapping[str, list[float]]) -> list[dict[str, Any]]:
+                    colonnes: Mapping[str, Any]) -> list[dict[str, Any]]:
     lignes: list[dict[str, Any]] = []
+    nettes = colonnes.get("_nettes", set())
     for bloc in blocs[debut + 1:]:
         texte = str(bloc.get("text", ""))
         if any(expression.search(texte) for expression in TOTAUX_RE):
@@ -322,14 +453,19 @@ def _lignes_tableau(blocs: Sequence[Mapping[str, Any]], debut: int,
         for cle in ("description", "quantity", "unit", "unit_price_ht", "discount",
                     "tax_rate", "line_total_ht", "delivered"):
             if cle in cellules:
-                cellule = _bloc_mots([mots[i] for i in cellules[cle]], bloc)
+                mots_cellule = [mots[i] for i in cellules[cle]]
+                cellule = _bloc_mots(mots_cellule, bloc)
                 brut = textes[cle]
                 if cle == "tax_rate":
                     brut = brut.replace(" ", "")
-                champs[cle] = _item(brut, cellule,
+                if cle in COLONNES_NUMERIQUES:
+                    modele = _modele_cellule(distances.get(cle), mots_cellule, cle in nettes)
+                elif cle == "unit":
+                    modele = MODELE_NET if norm.normalize_unit(brut) else MODELE_UNITE_INCONNUE
+                else:
+                    modele = MODELE_DESCRIPTION
+                champs[cle] = _item(brut, cellule, modele=modele,
                                     coherence=coherence if cle in COLONNES_NUMERIQUES else 0.9)
-            elif cle == "delivered" and "delivered" not in colonnes:
-                champs[cle] = _item(None, bloc, absent=True, coherence=coherence)
             else:
                 champs[cle] = _item(None, bloc, absent=True, coherence=coherence)
         lignes.append({"line_no": numero, "fields": champs})
@@ -351,28 +487,46 @@ def _lignes_texte(blocs: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         def cellule(groupe: int) -> dict[str, Any]:
             return _sous_bloc(segment, correspondance.start(groupe), correspondance.end(groupe))
 
+        modele_unite = MODELE_NET if norm.normalize_unit(unite) else MODELE_UNITE_INCONNUE
         champs = {
-            "description": _item(description, cellule(2), coherence=0.9),
-            "quantity": _item(quantite, cellule(3), coherence=coherence),
-            "unit": _item(unite, cellule(4), coherence=0.9),
-            "unit_price_ht": _item(prix, cellule(5), coherence=coherence),
-            "discount": _item(remise, cellule(6), coherence=coherence),
-            "tax_rate": _item(tva, cellule(7), coherence=coherence),
-            "line_total_ht": _item(total, cellule(8), coherence=coherence),
-            "delivered": (_item(livre, cellule(9), coherence=coherence) if livre is not None
+            "description": _item(description, cellule(2), coherence=0.9, modele=MODELE_DESCRIPTION),
+            "quantity": _item(quantite, cellule(3), coherence=coherence, modele=MODELE_NET),
+            "unit": _item(unite, cellule(4), coherence=0.9, modele=modele_unite),
+            "unit_price_ht": _item(prix, cellule(5), coherence=coherence, modele=MODELE_NET),
+            "discount": _item(remise, cellule(6), coherence=coherence, modele=MODELE_NET),
+            "tax_rate": _item(tva, cellule(7), coherence=coherence, modele=MODELE_NET),
+            "line_total_ht": _item(total, cellule(8), coherence=coherence, modele=MODELE_NET),
+            "delivered": (_item(livre, cellule(9), coherence=coherence, modele=MODELE_NET)
+                          if livre is not None
                           else _item(None, bloc, absent=True, coherence=coherence)),
         }
         lignes.append({"line_no": int(numero), "fields": champs})
     return lignes
 
 
+def _lire(segments: Sequence[Mapping[str, Any]], expression: re.Pattern[str],
+          groupe: int = 1) -> tuple[str | None, Mapping[str, Any] | None, Mapping[str, Any] | None]:
+    """Comme ``_capturer``, mais rend aussi le segment entier (libellé compris) pour juger la règle."""
+    for segment in segments:
+        correspondance = expression.search(str(segment.get("text", "")))
+        if correspondance:
+            valeur = correspondance.group(groupe).strip()
+            return valeur, _sous_bloc(segment, correspondance.start(groupe),
+                                      correspondance.end(groupe)), segment
+    return None, None, None
+
+
 def proposer(blocs: Sequence[Mapping[str, Any]], backend: str | None = None,
-             doc_type_hint: str | None = None) -> dict[str, Any]:
+             doc_type_hint: str | None = None,
+             clients: Sequence[Mapping[str, Any]] | None = None) -> dict[str, Any]:
     """Produit une proposition brute : valeurs lues + bloc d'origine de chaque valeur.
 
     Aucun champ n'est comblé. Une valeur absente est marquée ``missing``
     avec le bloc du libellé, pour que la visionneuse puisse montrer l'endroit
     où la donnée devrait être.
+
+    ``clients`` (référentiel, optionnel) sert uniquement au signal de
+    cohérence du nom et de l'IFU : il ne corrige ni ne rattache rien.
     """
     backend = backend or settings.ai_backend
     if backend not in BACKENDS:
@@ -385,42 +539,57 @@ def proposer(blocs: Sequence[Mapping[str, Any]], backend: str | None = None,
     segments = [segment for bloc in blocs for segment in _segments(bloc)]
     champs: dict[str, Any] = {}
 
-    reference, bloc_reference = _capturer(segments, REFERENCE_RE)
+    reference, bloc_reference, segment = _lire(segments, REFERENCE_RE)
+    modele_reference = MODELE_NET
     if reference:
-        reference = re.sub(r"\s+", "", reference).upper()
-    champs["reference"] = _item(reference, bloc_reference, absent=reference is None, coherence=0.95)
+        compacte = re.sub(r"\s+", "", reference).upper()
+        if compacte != reference:
+            modele_reference = MODELE_TOLERANT  # « DEV - 2026-041 » : espaces lus par l'OCR
+        reference = compacte
+    champs["reference"] = _item(reference, bloc_reference, absent=reference is None,
+                                coherence=0.95, modele=modele_reference)
 
-    client_brut, bloc_client = _capturer(segments, CLIENT_RE)
-    champs["client.name"] = _item(client_brut, bloc_client, absent=client_brut is None, coherence=0.9)
-
-    ifu_brut, bloc_ifu = _capturer(segments, IFU_RE)
-    coherence_ifu = 0.95
+    client_brut, bloc_client, segment_client = _lire(segments, CLIENT_RE)
+    ifu_brut, bloc_ifu, segment_ifu = _lire(segments, IFU_RE)
+    modele_ifu = _modele_libelle("client.ifu", segment_ifu)
     if ifu_brut is not None:
         corrige = ifu_brut.translate(CHIFFRES_OCR)
         if corrige != ifu_brut:
-            coherence_ifu = 0.6  # lettre lue au milieu d'un identifiant : on fait regarder
+            modele_ifu = MODELE_CORRIGE  # lettre lue au milieu d'un identifiant
         ifu_brut = re.sub(r"\s+", "", corrige)
+    coherence_nom, coherence_ifu, _ = _coherence_client(client_brut, ifu_brut, clients)
+    champs["client.name"] = _item(client_brut, bloc_client, absent=client_brut is None,
+                                  coherence=coherence_nom,
+                                  modele=_modele_libelle("client.name", segment_client))
     champs["client.ifu"] = _item(
         ifu_brut, bloc_ifu or _trouver(segments, IFU_LIBELLE_RE),
-        absent=ifu_brut is None, coherence=coherence_ifu,
+        absent=ifu_brut is None, coherence=coherence_ifu, modele=modele_ifu,
     )
     champs["client.address"] = _item(None, None, absent=True)
     champs["client.phone"] = _item(None, None, absent=True)
 
-    issue, bloc_issue = _capturer(segments, DATE_RE)
+    issue, bloc_issue, segment_date = _lire(segments, DATE_RE)
+    modele_date = _modele_libelle("dates.issue", segment_date)
     if issue:
-        issue = re.sub(r"\s+", "", issue)
-    champs["dates.issue"] = _item(issue, bloc_issue, absent=issue is None, coherence=0.95)
+        compacte = re.sub(r"\s+", "", issue)
+        if compacte != issue:
+            modele_date = MODELE_TOLERANT  # « 2026- 11-25 »
+        issue = compacte
+    champs["dates.issue"] = _item(issue, bloc_issue, absent=issue is None, coherence=0.95,
+                                  modele=modele_date)
     champs["dates.delivery"] = _item(None, _trouver(segments, r"\bLivr"), absent=True)
     champs["dates.due"] = _item(None, _trouver(segments, r"\b[EÉ]ch[eé]ance\b"), absent=True)
 
-    conditions, bloc_conditions = _capturer(segments, CONDITIONS_RE)
-    champs["payment_terms.text"] = _item(conditions, bloc_conditions, absent=conditions is None)
+    conditions, bloc_conditions, segment_conditions = _lire(segments, CONDITIONS_RE)
+    modele_conditions = _modele_libelle("payment_terms.text", segment_conditions)
+    champs["payment_terms.text"] = _item(conditions, bloc_conditions, absent=conditions is None,
+                                         modele=modele_conditions)
     jours = None
     if conditions:
         correspondance = re.search(r"\d+\s*jours?", conditions, re.I)
         jours = correspondance.group(0) if correspondance else None
-    champs["payment_terms.days"] = _item(jours, bloc_conditions, absent=jours is None)
+    champs["payment_terms.days"] = _item(jours, bloc_conditions, absent=jours is None,
+                                         modele=modele_conditions)
     champs["payment_terms.method"] = _item(None, None, absent=True)
 
     entete = _entete_tableau(blocs)
@@ -438,14 +607,18 @@ def proposer(blocs: Sequence[Mapping[str, Any]], backend: str | None = None,
     totaux: dict[str, Any] = {}
     for nom, expression in (("printed_ht", TOTAL_HT_RE), ("printed_vat", TOTAL_TVA_RE),
                             ("printed_ttc", TOTAL_TTC_RE)):
-        brut, bloc = _capturer(segments, expression)
+        brut, bloc, segment = _lire(segments, expression)
+        modele = _modele_libelle(nom, segment)
         if brut is not None:
-            brut = brut.translate(CHIFFRES_OCR)  # à l'intérieur d'un montant, « O » est un zéro
+            corrige = brut.translate(CHIFFRES_OCR)  # à l'intérieur d'un montant, « O » est un zéro
+            if corrige != brut:
+                modele = MODELE_CORRIGE
+            brut = corrige
         coherence = 0.9
         if nom == "printed_ht" and brut is not None and lignes_completes:
             # Un total imprimé qui contredit ses lignes reste lu tel quel, mais on le fait regarder.
             coherence = 0.98 if norm.normalize_amount(brut) == somme_lignes else 0.6
-        totaux[nom] = _item(brut, bloc, absent=brut is None, coherence=coherence)
+        totaux[nom] = _item(brut, bloc, absent=brut is None, coherence=coherence, modele=modele)
 
     proposition = {
         "backend": backend,
@@ -485,13 +658,14 @@ def _proposer_cloud(blocs: Sequence[Mapping[str, Any]], doc_type_hint: str | Non
 
 def extraire(chemin: str | Path, backend: str | None = None,
              doc_type_hint: str | None = None,
-             ocr_backend: str | None = None) -> dict[str, Any]:
+             ocr_backend: str | None = None,
+             clients: Sequence[Mapping[str, Any]] | None = None) -> dict[str, Any]:
     """Lit une pièce, produit un schéma valide ou lève une exception."""
     backend = backend or settings.ai_backend
     blocs = ocr.lire(chemin, backend=ocr_backend)
     if not blocs:
         raise ExtractionInvalide("aucun bloc OCR : extraction impossible")
-    proposition = proposer(blocs, backend=backend, doc_type_hint=doc_type_hint)
+    proposition = proposer(blocs, backend=backend, doc_type_hint=doc_type_hint, clients=clients)
     payload = assembler(proposition, backend=backend)
     resultat = valider(payload)
     if not resultat["valide"]:
