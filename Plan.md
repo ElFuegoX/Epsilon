@@ -116,6 +116,7 @@ Documentation technique complète : **[`docs/EXTRACTION.md`](docs/EXTRACTION.md)
 - [ ] Dockerfile : `COPY seeds ./seeds` à ajouter par Melon (cache OCR et vérités terrain dans l'image).
 - [x] Maillon extraction → brouillon (`domain/brouillon.py`, `docs/BROUILLON.md`) : brouillon BROUILLON idempotent, client C1/C2, livraisons, valeurs non lues déduites puis à confirmer, `exiger_confirmations` avant `validate_draft`. `seed --reset` crée 96 brouillons. **À valider avec Larissa et Melon.**
 - [x] Outillage de la mesure contre la méthode de référence (`domain/reference.py`, `docs/PROTOCOLE_REFERENCE.md`) : 20 pièces hors jeu de développement, fiches dans `seeds/reference/`.
+- [x] **Version fonctionnelle de bout en bout** (`domain/parcours.py`, `docs/PARCOURS.md`) : import (doublon refusé) → extraction → brouillon → contrôles → confirmations et décisions tracées → validation idempotente → PDF figé reproductible → émission simulée → avoir. Adaptateurs `pdf.py`, `mecef_stub.py`, `canaux.py` écrits (pistes de Melon reprises). `python -m cli demo` rejoue les 4 gestes du jury. Reste : API HTTP et worker.
 - [ ] **Faire la saisie manuelle chronométrée** des 20 pièces (idéalement par une personne extérieure), puis `python -m domain.reference comparer`.
 - [ ] Relecture humaine de la vérité terrain par Larissa (à faire ; la graine ne remplace pas une validation humaine).
 

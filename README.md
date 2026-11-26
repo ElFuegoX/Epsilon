@@ -32,7 +32,10 @@ cd web && npm install && npm run dev
 | `make seed` | Charge 96 pièces, 64 clients, 120 articles, 60 factures, 9 avoirs |
 | `make reset` | Réinitialise complètement la démo (`AS_OF=2026-11-25`) |
 | `make test` | Tests de calcul, provenance, concurrence, immuabilité, audit |
-| `make verify` | Vérifie la chaîne d'audit et les hash des PDF |
+| `make verify` (`python -m cli verify`) | Vérifie la chaîne d'audit, les PDF des factures et la continuité des numéros |
+| `python -m cli demo` | **Rejoue tout le parcours du jury** sur DEV-2026-041, pas à pas, sur une base neuve |
+| `python -m cli importer <fichier>` | Importe une pièce, l'extrait et crée son brouillon |
+| `python -m cli reprendre` | Reprise après interruption : relance les pièces en attente d'OCR |
 | `make demo` | Lance l'API en mode démo déterministe (`AI_BACKEND=demo`) |
 | `git tag v1.1-bwai` | Étiquette de version du dépôt |
 
@@ -87,6 +90,8 @@ Les sous-dossiers du backend sont directement à la racine : il n'y a plus de do
 Les imports se font donc en absolu (`from config import settings`, `from db import transaction`, `from adapters.pdf import ...`).
 
 ## Les 4 gestes que le jury peut rejouer
+
+Tous les quatre en une commande : `python -m cli demo` (détail dans [`docs/PARCOURS.md`](docs/PARCOURS.md)).
 
 1. Importer deux fois le même devis → une seule pièce (hash identique).
 2. Valider deux fois le même brouillon → une seule facture, un seul numéro.

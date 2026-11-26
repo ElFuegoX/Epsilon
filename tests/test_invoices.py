@@ -232,8 +232,17 @@ class TestValidation(unittest.TestCase):
         self.assertEqual(prochaine(conn, settings.prefixe_facture), 1)
 
     def test_pdf_de_melon_indisponible_sans_injection(self) -> None:
+        # adapters/pdf.py existe désormais : on simule un générateur absent pour garder
+        # la garantie « PDF indisponible → aucune facture, aucun numéro consommé ».
+        import sys
+        import types
+        from unittest import mock
+
         conn = base()
-        with self.assertRaises(EtatInvalide) as attire:
+        vide = types.ModuleType("pdf_absent")
+        with mock.patch.dict(sys.modules, {"adapters.pdf": vide}), \
+                mock.patch("adapters.pdf", vide, create=True), \
+                self.assertRaises(EtatInvalide) as attire:
             validate_draft(conn, "d1", "larissa", idempotency_key="sans-pdf")
         self.assertIn("TODO Melon", str(attire.exception))
         self.assertEqual(conn.execute("SELECT COUNT(*) FROM invoices").fetchone()[0], 0)
