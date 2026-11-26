@@ -42,13 +42,14 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 5. **Rapprochement et pièces** (`domain/matching.py`, `domain/document_rules.py`) : commandé / livré / facturé ; transitions de statut et ligne non livrée bloquée sauf décision humaine tracée. L'ingestion, le hash et le stockage immuable restent dans `domain/documents.py`, possédé par **Melon** (§4).
 6. **Tests** (`tests/test_tax.py`, `test_controls.py`, `test_numbering.py`, `test_invoices.py`) : 1 000 cas de propriété sur le calcul, un test par code d'anomalie, continuité des numéros, immuabilité.
 7. **Spécifications de recette** (`docs/RECETTE.md`, `docs/DECISIONS.md`) : écrire les résultats attendus **avant** le code, pas après.
+8. **Relecture de la vérité terrain** : contrôle contradictoire consigné dans [`docs/RELECTURE_GOLDEN.md`](docs/RELECTURE_GOLDEN.md) ; signature humaine encore requise.
 
 ### Definition of done — Larissa
-- [ ] `make test` passe sur les 4 fichiers de test possédés, sans réseau.
-- [ ] L'écart de 20 000 FCFA est signalé comme anomalie bloquante.
-- [ ] Deux validations simultanées ne produisent qu'un seul numéro (test avec Melon).
-- [ ] Un avoir cumulé supérieur au TTC est refusé avant toute écriture.
-- [ ] Chaque règle arbitrée figure dans `DECISIONS.md` avec date, question, décision, motif, conséquence technique.
+- [x] `make test` passe sur les 4 fichiers de test possédés, sans réseau (128 tests ciblés OK, 184 au total).
+- [x] L'écart de 20 000 FCFA est signalé comme anomalie bloquante.
+- [x] Deux validations simultanées ne produisent qu'un seul numéro (test avec Melon).
+- [x] Un avoir cumulé supérieur au TTC est refusé avant toute écriture.
+- [x] Chaque règle arbitrée figure dans `DECISIONS.md` avec date, question, décision, motif, conséquence technique.
 
 ---
 
@@ -63,11 +64,15 @@ Le blueprint prévoit 5 rôles. Avec 4 personnes qui codent toutes, on garde les
 6. **Contrat** (`docs/API.md`) : tenir le contrat à jour et prévenir Jean-Marie avant toute modification.
 
 ### Definition of done — Melon
-- [ ] `docker compose up --build` démarre API + worker + web sans clé API externe.
-- [ ] Une pièce importée deux fois ne crée qu'une pièce (hash unique + clé d'idempotence).
-- [ ] `GET /audit/verify` et `make verify` détectent une altération du journal.
-- [ ] Toutes les routes refusent un rôle non autorisé, et toute modification d'une facture émise renvoie 409.
-- [ ] Le worker coupé puis relancé reprend sans recréer de pièce.
+- [ ] `docker compose up --build` démarre API + worker + web sans clé API externe. **Non exécuté ici : Docker absent de la machine** ; configuration relue statiquement (services `api`, `worker`, `web`, healthcheck, `AI_BACKEND=demo`, `COPY seeds ./seeds`). À lancer sur une machine équipée.
+- [x] Une pièce importée deux fois ne crée qu'une pièce (hash unique + clé d'idempotence) : `tests/test_concurrency.py`, `409` sur doublon.
+- [x] `GET /audit/verify` et `make verify` détectent une altération du journal : `tests/test_audit.py`, `tests/test_concurrency.py`. Correction 2026-11-26 : `cli.py` ignore les factures historiques sans PDF (`HISTORIQUE_SANS_PDF`), sinon `make verify` plantait sur la base chargée.
+- [x] Toutes les routes refusent un rôle non autorisé, et toute modification d'une facture émise renvoie 409 : `tests/test_concurrency.py`, `tests/test_e2e.py`.
+- [x] Le worker coupé puis relancé reprend sans recréer de pièce : `tests/test_concurrency.py`, `tests/test_e2e.py`.
+
+Base de démo restaurée le 2026-11-26 (`python -m seed --reset`) : 96 pièces, 96 extraites, 60 factures, 9 avoirs, 18 paiements ; empreinte du corpus inchangée `7713f888568e6bd7e4a57dbd364ea3e27d7405d4c4e1e328218c5c8932cc6d20`.
+
+Revue des correctifs d'intégration dans les fichiers de Melon (2026-11-26) : `_serialize_draft` résout les taux depuis `tax_codes` (aucun défaut inventé) et `GET /documents/{id}/file` sert la copie immuable avec `X-Role` ; les deux sont documentés dans [`docs/API.md`](docs/API.md) et couverts par le parcours `tests/test_e2e.py`.
 
 ---
 
@@ -114,7 +119,7 @@ Documentation technique complète : **[`docs/EXTRACTION.md`](docs/EXTRACTION.md)
 - [x] `python -m seed --reset` charge la base (référentiels, 60 factures, 9 avoirs, 18 paiements, 96 pièces) ; `persister()` écrit `extracted_fields` aux chemins lus par `controls`.
 - [x] Cache EasyOCR complet (40 images, `seeds/ocr_cache/`) ; fiche IA réécrite avec la chaîne réelle : en-tête 96,4 %, F1 lignes 0,959, STP 69,2 %, 0 valeur inventée ; photos = classe faible (STP 6,7 %). Ablation « texte parfait » : 100 %.
 - [x] Dockerfile : `COPY seeds ./seeds` (cache OCR et vérités terrain présents dans l'image).
-- [ ] Relecture humaine de la vérité terrain par Larissa (à faire ; la graine ne remplace pas une validation humaine).
+- [ ] Relecture humaine de la vérité terrain par Larissa : contrôle contradictoire préparé dans [`docs/RELECTURE_GOLDEN.md`](docs/RELECTURE_GOLDEN.md) (120 fichiers, 117 conformes, 3 pièces dégradées documentées) ; **signature humaine encore requise**.
 
 ---
 

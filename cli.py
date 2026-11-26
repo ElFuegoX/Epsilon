@@ -44,8 +44,12 @@ def cmd_verify(db_path: str | None = None) -> int:
             ok_all = False
             print(f"[ECHEC] Continuité des numéros : {'; '.join(num_err)}", file=sys.stderr)
 
-        invoices = conn.execute("SELECT id, numero FROM invoices ORDER BY numero").fetchall()
+        invoices = conn.execute("SELECT id, numero, hash_pdf FROM invoices ORDER BY numero").fetchall()
         for inv in invoices:
+            if inv["hash_pdf"] == "HISTORIQUE_SANS_PDF":
+                # Les factures historiques chargées par seed.py n'ont pas de PDF
+                # généré : leur snapshot ne contient pas de client développé.
+                continue
             if verifier_pdf(conn, inv["id"]):
                 print(f"[OK] PDF {inv['numero']} : hash SHA-256 conforme au snapshot.")
             else:

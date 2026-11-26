@@ -28,6 +28,16 @@ Idempotence : en-tête optionnel `Idempotency-Key` sur `POST /documents`, `POST 
 
 `GET /documents` et `GET /documents/{id}` exposent `url` (chemin relatif vers `/file`) uniquement lorsqu'une copie du fichier existe ; `null` sinon. Les téléchargements (`/pdf`, `/export.csv`, `/file`) exigent l'en-tête `X-Role` : le front les récupère via `fetch` puis ouvre un Blob local.
 
+`POST /anomalies/{id}/resolve` accepte `{"justification": "motif"}` (ou `{"resolution": "motif"}`). L'acteur est lu dans `X-Role` ; le motif est le texte fourni ; `avant` et `apres` sont journalisés dans la ligne d'anomalie. Aucun acteur n'est accepté dans le corps de la requête.
+
+### Limites de contrat connues (2026-11-26)
+
+- `remise_globale` n'est ni persistée ni exposée : `draft_lines` ne porte que `remise` et `remise_pct` par ligne. Le calcul déterministe reste disponible côté domaine.
+- Aucune colonne `reference_commande` : `DUPLICATE_INVOICE` repose sur client + TTC + date à ±3 jours.
+- Aucune table `credit_note_lines` : `avoirs_precedents` n'est pas transmis par l'API ; seule la borne TTC globale est appliquée à l'émission d'un avoir.
+
+Ces limites sont arbitrées dans [`DECISIONS.md`](DECISIONS.md) (§ Confirmations techniques — Melon).
+
 ## Codes d'erreur standard
 
 - `403 Forbidden` : rôle absent/inconnu ou insuffisant pour l'action.

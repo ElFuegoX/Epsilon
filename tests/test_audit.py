@@ -60,6 +60,28 @@ class TestAuditChain(unittest.TestCase):
         finally:
             conn.close()
 
+    def test_verify_skips_historical_invoices_without_pdf(self) -> None:
+        """Les 60 factures historiques n'ont pas de PDF : `make verify` doit passer."""
+        conn = connect(self.db_path)
+        try:
+            with transaction(conn):
+                conn.execute(
+                    "INSERT INTO invoices(id, numero, serie, annee, snapshot, hash_snapshot, hash_pdf, "
+                    "date, statut, canal, client, total_ht, total_tva, total_ttc) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    ("inv_hist", "FAC-2026-00001", "FAC", 2026,
+                     '{"historique": true, "client": "cli_1"}', "sha_snapshot",
+                     "HISTORIQUE_SANS_PDF", "2026-11-25", "ÉMISE", "historique", None,
+                     1000, 180, 1180),
+                )
+                conn.execute(
+                    "UPDATE number_sequences SET prochaine=2 "
+                    "WHERE serie='FAC' AND annee=2026 AND prefixe='FAC'"
+                )
+            self.assertEqual(cmd_verify(self.db_path), 0)
+        finally:
+            conn.close()
+
     def test_pdf_generation_is_deterministic(self) -> None:
         snapshot = {
             "numero": "FAC-2026-00001",
