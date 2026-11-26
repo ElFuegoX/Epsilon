@@ -3,7 +3,7 @@ import { api } from '../api.js'
 import { money, statusColor } from '../utils.js'
 
 export default function Inbox({ data, run, onOpen }) {
-  const [mode, setMode] = useState('file')
+  const [mode, setMode] = useState(null) // null | 'file' | 'text'
   const [dragging, setDragging] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
   const [msgTitle, setMsgTitle] = useState('')
@@ -30,6 +30,7 @@ export default function Inbox({ data, run, onOpen }) {
       const created = await api.importFile(target)
       const extracted = await api.extract(created.id)
       setSelectedFile(null)
+      setMode(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
       onOpen(created.id, extracted?.draft_id || null)
       return extracted
@@ -47,6 +48,7 @@ export default function Inbox({ data, run, onOpen }) {
       const extracted = await api.extract(created.id)
       setMsgTitle('')
       setMsgText('')
+      setMode(null)
       onOpen(created.id, extracted?.draft_id || null)
       return extracted
     })
@@ -77,173 +79,229 @@ export default function Inbox({ data, run, onOpen }) {
   }
 
   return (
-    <section>
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold">Boîte d'entrée</h2>
-          <p className="text-sm text-slate-500">Déposez un devis, une photo ou collez un message WhatsApp : WÉMA vérifie avant de facturer.</p>
-        </div>
-        <button
-          type="button"
-          onClick={importDemo}
-          disabled={busy}
-          className="rounded border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-50"
-        >
-          Tester le devis témoin (DEV-2026-041)
-        </button>
-      </header>
-
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Pièces analysées</p>
-          <p className="mt-1 text-2xl font-black text-slate-900">{treated} <span className="text-xs font-normal text-slate-400">/ {data.documents.length}</span></p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Pièges bloqués</p>
-          <p className={`mt-1 text-2xl font-black ${blockedAnomalies > 0 ? 'text-red-700' : 'text-emerald-700'}`}>{blockedAnomalies}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Erreurs évitées</p>
-          <p className="mt-1 text-2xl font-black text-emerald-700">{money(avoidedFcfa)}</p>
-        </div>
-      </div>
-
-      <div className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <div className="flex border-b border-slate-200 bg-slate-50 text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => setMode('file')}
-            className={`px-4 py-3 transition ${mode === 'file' ? 'border-b-2 border-slate-900 bg-white text-slate-900' : 'text-slate-500 hover:text-slate-800'}`}
-          >
-            1. Choisir un fichier (PDF / Photo)
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('text')}
-            className={`px-4 py-3 transition ${mode === 'text' ? 'border-b-2 border-slate-900 bg-white text-slate-900' : 'text-slate-500 hover:text-slate-800'}`}
-          >
-            2. Coller un message WhatsApp
-          </button>
-        </div>
-
-        {mode === 'file' ? (
-          <div
-            onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault()
-              setDragging(false)
-              const dropped = e.dataTransfer?.files?.[0]
-              if (dropped) {
-                setSelectedFile(dropped)
-                handleFileSubmit(dropped)
-              }
-            }}
-            className={`p-6 text-center transition ${dragging ? 'bg-amber-50' : 'bg-white'}`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.webp,.txt"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-              className="hidden"
-              id="wema-file-input"
-            />
-            <p className="text-sm font-medium text-slate-800">
-              {selectedFile ? `Fichier prêt : ${selectedFile.name}` : 'Glissez un devis PDF ou une photo de commande ici'}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">Formats acceptés : PDF, PNG, JPG, WebP, TXT (max 20 Mo).</p>
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              <label
-                htmlFor="wema-file-input"
-                className="cursor-pointer rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Parcourir mon ordinateur
-              </label>
+    <section className="space-y-5">
+      <div className="grid gap-5 lg:grid-cols-[1.05fr_1.25fr] lg:items-start">
+        {/* Colonne gauche : Carte Hero Fintech + Capture terrain */}
+        <div className="space-y-4">
+          <div className="rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-5 text-white shadow-md">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
+                Protection facturation
+              </span>
               <button
                 type="button"
-                disabled={!selectedFile || busy}
-                onClick={() => handleFileSubmit()}
-                className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                onClick={importDemo}
+                disabled={busy}
+                className="rounded-xl bg-white/15 px-3 py-1.5 text-xs font-bold text-white backdrop-blur transition hover:bg-white/25 disabled:opacity-50"
               >
-                {busy ? 'Analyse en cours…' : 'Importer et analyser'}
+                Tester DEV-2026-041 →
               </button>
+            </div>
+            <p className="mt-3 text-3xl font-black tracking-tight tabular-nums">
+              {money(avoidedFcfa)}
+            </p>
+            <p className="mt-0.5 text-xs text-emerald-100">
+              d’erreurs détectées et bloquées avant émission
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/20 pt-3.5 text-xs">
+              <div>
+                <span className="text-emerald-100/80">Dossiers analysés</span>
+                <p className="mt-0.5 text-base font-extrabold tabular-nums">
+                  {treated} <span className="text-xs font-normal text-emerald-100/80">/ {data.documents.length}</span>
+                </p>
+              </div>
+              <div>
+                <span className="text-emerald-100/80">Anomalies actives</span>
+                <p className="mt-0.5 text-base font-extrabold tabular-nums">
+                  {blockedAnomalies} à traiter
+                </p>
+              </div>
             </div>
           </div>
-        ) : (
-          <form onSubmit={handleTextSubmit} className="space-y-3 p-5">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600" htmlFor="msg-title">
-                Nom / référence de la commande (optionnel)
-              </label>
+
+          {/* 2 gros boutons tactiles d'import terrain */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setMode(mode === 'file' ? null : 'file')}
+              className={`rounded-2xl border p-4 text-left shadow-sm transition ${
+                mode === 'file'
+                  ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-500/20'
+                  : 'border-slate-200 bg-white hover:border-emerald-400'
+              }`}
+            >
+              <p className="text-sm font-bold text-slate-900">Photo ou PDF</p>
+              <p className="mt-0.5 text-xs text-slate-500">Devis, bon de commande</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode(mode === 'text' ? null : 'text')}
+              className={`rounded-2xl border p-4 text-left shadow-sm transition ${
+                mode === 'text'
+                  ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-500/20'
+                  : 'border-slate-200 bg-white hover:border-emerald-400'
+              }`}
+            >
+              <p className="text-sm font-bold text-slate-900">Coller WhatsApp</p>
+              <p className="mt-0.5 text-xs text-slate-500">Message client brut</p>
+            </button>
+          </div>
+
+          {/* Tiroir Fichier */}
+          {mode === 'file' && (
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setDragging(false)
+                const dropped = e.dataTransfer?.files?.[0]
+                if (dropped) {
+                  setSelectedFile(dropped)
+                  handleFileSubmit(dropped)
+                }
+              }}
+              className={`rounded-2xl border-2 border-dashed p-5 text-center transition ${
+                dragging ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300 bg-white'
+              }`}
+            >
               <input
-                id="msg-title"
-                type="text"
-                value={msgTitle}
-                onChange={(e) => setMsgTitle(e.target.value)}
-                placeholder="Ex. Commande WhatsApp - Ets Sossa"
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.txt"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                className="hidden"
+                id="wema-file-input"
               />
+              <p className="text-sm font-semibold text-slate-800">
+                {selectedFile ? `Prêt : ${selectedFile.name}` : 'Glissez un devis PDF ou une photo ici'}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">PDF, PNG, JPG, WebP, TXT (max 20 Mo)</p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <label
+                  htmlFor="wema-file-input"
+                  className="cursor-pointer rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Parcourir
+                </label>
+                <button
+                  type="button"
+                  disabled={!selectedFile || busy}
+                  onClick={() => handleFileSubmit()}
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  {busy ? 'Analyse…' : 'Importer et analyser'}
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600" htmlFor="msg-text">
-                Message brut du client
-              </label>
-              <textarea
-                id="msg-text"
-                rows={4}
-                value={msgText}
-                onChange={(e) => setMsgText(e.target.value)}
-                placeholder="Ex. Bonjour chef, envoie-moi 10 cartons d'eau 1,5L et 2 tables basses à livrer à Akpakpa..."
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={!msgText.trim() || busy}
-                className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-              >
-                {busy ? 'Analyse en cours…' : 'Importer et analyser ce message'}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+          )}
 
-      {waiting > 0 && (
-        <div className="mb-4 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {waiting} pièce{waiting > 1 ? 's' : ''} en file <strong>EN_ATTENTE_IA</strong> — reprise automatique sans doublon.
+          {/* Tiroir Message WhatsApp */}
+          {mode === 'text' && (
+            <form onSubmit={handleTextSubmit} className="space-y-3 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700" htmlFor="msg-title">
+                  Nom de la commande (optionnel)
+                </label>
+                <input
+                  id="msg-title"
+                  type="text"
+                  value={msgTitle}
+                  onChange={(e) => setMsgTitle(e.target.value)}
+                  placeholder="Ex. Commande WhatsApp - Ets Sossa"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:bg-white focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700" htmlFor="msg-text">
+                  Message brut du client
+                </label>
+                <textarea
+                  id="msg-text"
+                  rows={3}
+                  value={msgText}
+                  onChange={(e) => setMsgText(e.target.value)}
+                  placeholder="Collez ici le message WhatsApp ou email reçu..."
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:bg-white focus:outline-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMode(null)}
+                  className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={!msgText.trim() || busy}
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  {busy ? 'Analyse…' : 'Analyser ce message'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {waiting > 0 && (
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-950">
+              <strong>{waiting} pièce{waiting > 1 ? 's' : ''} en file sécurisée</strong> — reprise automatique sans doublon dès que le traitement continue.
+            </div>
+          )}
         </div>
-      )}
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr><th className="p-3">Pièce</th><th className="p-3">Type</th><th className="p-3">État</th><th className="p-3">Empreinte</th><th /></tr>
-          </thead>
-          <tbody>
-            {data.documents.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="p-6 text-center text-sm text-slate-400">
-                  Aucune pièce importée pour l'instant. Déposez un fichier, collez un message ou testez le devis témoin.
-                </td>
-              </tr>
-            ) : (
-              data.documents.map((doc) => (
-                <tr key={doc.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="p-3 font-medium">{doc.reference || doc.filename || doc.id}</td>
-                  <td className="p-3 text-slate-500">{doc.type}</td>
-                  <td className="p-3"><span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusColor(doc.status)}`}>{doc.status}</span></td>
-                  <td className="p-3 font-mono text-xs text-slate-500">{String(doc.hash || '').slice(0, 10)}</td>
-                  <td className="p-3 text-right">
-                    <button onClick={() => onOpen(doc.id)} className="text-sm font-medium text-blue-700 hover:underline">Ouvrir →</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        {/* Colonne droite : File des dossiers en cartes empilées */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Dossiers récents ({data.documents.length})
+            </h2>
+            <span className="text-xs text-slate-400">Touchez un dossier pour le vérifier</span>
+          </div>
+
+          {data.documents.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
+              Aucune pièce importée pour l’instant. Choisissez un fichier, collez un message WhatsApp ou testez DEV-2026-041.
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {data.documents.slice(0, 12).map((doc) => {
+                const isWaiting = doc.status === 'EN_ATTENTE_IA'
+                return (
+                  <button
+                    key={doc.id}
+                    type="button"
+                    onClick={() => onOpen(doc.id)}
+                    className={`w-full rounded-2xl border p-4 text-left shadow-sm transition hover:scale-[1.005] ${
+                      isWaiting
+                        ? 'border-amber-200 bg-amber-50/40 hover:border-amber-400'
+                        : 'border-slate-200 bg-white hover:border-emerald-400'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-900">
+                          {doc.reference || doc.filename || doc.id}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {doc.type} · empreinte <span className="font-mono">{String(doc.hash || '').slice(0, 8)}</span>
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusColor(doc.status)}`}>
+                        {doc.status}
+                      </span>
+                    </div>
+                    <div className="mt-2.5 flex items-center justify-between text-xs">
+                      <span className="text-slate-400">{doc.filename}</span>
+                      <span className="font-bold text-emerald-700">Ouvrir →</span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   )

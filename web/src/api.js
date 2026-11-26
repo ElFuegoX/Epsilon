@@ -2,7 +2,7 @@
 // VITE_USE_MOCK=true force la démo autonome ; par défaut on parle à l'API réelle.
 import { mockRequest } from './mock.js'
 
-export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+export const API_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:8000' : '')
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 export const DEFAULT_ROLE = import.meta.env.VITE_ROLE || 'dirigeant'
 let currentRole = DEFAULT_ROLE

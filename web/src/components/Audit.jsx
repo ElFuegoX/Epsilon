@@ -9,9 +9,14 @@ export default function Audit({ data, run, setNotice }) {
     })
   })
 
-  const exportCsv = () => {
+  const exportCsv = async () => {
     if (!USE_MOCK) {
-      run(() => api.downloadAuditCsv())
+      try {
+        await api.downloadAuditCsv()
+        setNotice({ type: 'success', text: 'Journal d’audit exporté en CSV.' })
+      } catch (error) {
+        setNotice({ type: 'error', text: error.message || String(error) })
+      }
       return
     }
     const header = 'id,horodatage,action,acteur,cible,hash'
@@ -31,50 +36,56 @@ export default function Audit({ data, run, setNotice }) {
   }
 
   return (
-    <section>
-      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
         <div>
-          <h2 className="text-xl font-bold">Journal d'audit</h2>
-          <p className="text-sm text-slate-500">Chaque action est horodatée et chaînée par empreinte SHA-256.</p>
+          <h2 className="text-base font-extrabold text-emerald-950">Journal d’intégrité SHA-256</h2>
+          <p className="text-xs text-emerald-800">
+            {data.audit.length} action(s) horodatée(s) et chaînée(s) : toute modification passée casse la chaîne.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={exportCsv}
-            className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100"
+            className="rounded-xl border border-emerald-300 bg-white px-3.5 py-2 text-xs font-bold text-emerald-900 hover:bg-emerald-100/50"
           >
             Exporter CSV
           </button>
           <button
             type="button"
             onClick={verify}
-            className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+            className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
           >
             Vérifier la chaîne
           </button>
         </div>
-      </header>
+      </div>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr><th className="p-3">Horodatage</th><th className="p-3">Action</th><th className="p-3">Acteur</th><th className="p-3">Cible</th><th className="p-3">Empreinte</th></tr>
+            <tr>
+              <th className="p-3.5">Horodatage</th>
+              <th className="p-3.5">Action</th>
+              <th className="p-3.5">Acteur</th>
+              <th className="p-3.5">Cible</th>
+              <th className="p-3.5">Empreinte</th>
+            </tr>
           </thead>
           <tbody>
-            {data.audit.map((event) => (
-              <tr key={event.id} className="border-t border-slate-100">
-                <td className="p-3 font-mono text-xs text-slate-500">{event.at}</td>
-                <td className="p-3 font-medium">{event.action}</td>
-                <td className="p-3">{event.actor}</td>
-                <td className="p-3">{event.target || '—'}</td>
-                <td className="p-3 font-mono text-xs text-slate-500">{String(event.hash || '').slice(0, 14)}</td>
+            {data.audit.slice(0, 50).map((event) => (
+              <tr key={event.id} className="border-t border-slate-100 hover:bg-slate-50/70">
+                <td className="p-3.5 font-mono text-xs text-slate-500">{event.at}</td>
+                <td className="p-3.5 font-semibold text-slate-900">{event.action}</td>
+                <td className="p-3.5 text-slate-700">{event.actor}</td>
+                <td className="p-3.5 text-slate-600">{event.target || '—'}</td>
+                <td className="p-3.5 font-mono text-xs text-slate-400">{String(event.hash || '').slice(0, 14)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      <p className="mt-4 text-xs text-slate-500">Vérification hors ligne disponible aussi via <code>python -m cli verify</code> (chaîne SHA-256, numérotation et hash PDF).</p>
     </section>
   )
 }

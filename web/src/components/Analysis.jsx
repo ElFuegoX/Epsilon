@@ -39,35 +39,39 @@ export default function Analysis({ document: doc, draft, highlight, setHighlight
   )
 
   return (
-    <section>
-      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <section className="space-y-5">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold">Analyse · vérification de la pièce</h2>
-          <p className="text-sm text-slate-500">Cliquez sur une information pour voir exactement où elle a été lue sur le document. Aucune donnée absente n'est inventée.</p>
+          <h2 className="text-lg font-extrabold text-slate-900">Vérification de la pièce</h2>
+          <p className="text-xs text-slate-500">Touchez une valeur pour surligner sa source exacte sur le document.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setShowTech((v) => !v)}
-            className="rounded border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100"
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
           >
-            {showTech ? 'Masquer détails techniques' : 'Détails techniques (Audit)'}
+            {showTech ? 'Masquer audit' : 'Détails audit'}
           </button>
-          <button onClick={() => go('lines')} className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700">
-            Voir les lignes →
+          <button
+            type="button"
+            onClick={() => go('controls')}
+            className="rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
+          >
+            Voir les anomalies →
           </button>
         </div>
       </header>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <SourceViewer document={doc} highlight={highlight} onSelectField={setHighlight} showTech={showTech} />
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-bold">Informations lues sur la pièce</h3>
+              <h3 className="text-sm font-bold text-slate-900">Informations lues</h3>
               <span className="text-[11px] text-slate-400">Fiable · À vérifier · Manquant</span>
             </div>
             <dl className="divide-y divide-slate-100 text-sm">
@@ -78,25 +82,28 @@ export default function Analysis({ document: doc, draft, highlight, setHighlight
                 const badge = reliabilityBadge(field?.confidence, absent)
                 const pct = field?.confidence != null ? `${Math.round(field.confidence * 100)} %` : null
                 return (
-                  <div key={key} className="flex items-center justify-between gap-3 py-2">
-                    <dt className="flex items-center gap-2 text-slate-600">
+                  <div key={key} className="flex items-center justify-between gap-3 py-2.5">
+                    <dt className="flex items-center gap-2 text-xs font-medium text-slate-600">
                       <span>{label}</span>
                       {showTech && field?.method && (
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">
+                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">
                           {field.method}
                         </span>
                       )}
                     </dt>
                     <dd className="flex items-center gap-2 text-right">
                       {absent ? (
-                        <span className="rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700">— absent de la pièce —</span>
+                        <span className="rounded-lg bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">— absent —</span>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => setHighlight(key)}
-                          className={`rounded px-2 py-1 font-medium hover:bg-amber-100 ${highlight === key ? 'bg-amber-200 text-amber-950' : 'text-slate-900'}`}
+                          className={`rounded-lg px-2 py-1 text-xs font-bold tabular-nums transition ${
+                            highlight === key ? 'bg-amber-200 text-amber-950' : 'text-slate-900 hover:bg-emerald-50'
+                          }`}
                         >
                           {typeof field.value === 'number' && key !== 'reference' ? money(field.value) : field.value}
-                          {field.page && <span className="ml-1.5 text-[10px] text-slate-400">p.{field.page}</span>}
+                          {field.page && <span className="ml-1.5 text-[10px] font-normal text-slate-400">p.{field.page}</span>}
                         </button>
                       )}
                       <span
@@ -113,21 +120,34 @@ export default function Analysis({ document: doc, draft, highlight, setHighlight
           </div>
 
           {(doc?.fields?.client_ifu?.motif === 'ABSENT_DE_LA_PIECE' || doc?.fields?.['client.ifu']?.motif === 'ABSENT_DE_LA_PIECE') && (
-            <div className="rounded-lg border border-red-300 bg-red-50 p-4">
-              <p className="text-sm font-semibold text-red-800">Information obligatoire absente : IFU du client</p>
-              <p className="mt-1 text-xs text-red-700">WÉMA ne devine jamais un numéro fiscal : envoyez un message rapide au client pour le récupérer.</p>
-              <button onClick={copyClarification} className="mt-3 rounded bg-red-700 px-3 py-2 text-xs font-medium text-white hover:bg-red-800">
-                Copier le message de demande au client
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+              <p className="text-sm font-bold text-red-900">IFU du client absent de la pièce</p>
+              <p className="mt-1 text-xs text-red-700">WÉMA ne devine jamais un numéro fiscal : envoyez la demande directement au client.</p>
+              <button
+                type="button"
+                onClick={copyClarification}
+                className="mt-3 w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
+              >
+                Copier le message WhatsApp de demande d’IFU
               </button>
             </div>
           )}
 
           {draft && (
-            <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-              <h3 className="mb-2 text-sm font-bold">Brouillon préparé</h3>
-              <p><span className="text-slate-500">Référence :</span> {draft.reference || draft.id}</p>
-              <p><span className="text-slate-500">Client :</span> {draft.client?.name || draft.client_detail?.raison_sociale || '— absent de la pièce —'}</p>
-              <p><span className="text-slate-500">Lignes :</span> {draft.lines?.length ?? 0}</p>
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-sm">
+              <div>
+                <p className="font-bold text-slate-900">{draft.reference || draft.id}</p>
+                <p className="text-slate-500">
+                  {draft.client?.name || draft.client_detail?.raison_sociale || '— absent de la pièce —'} · {draft.lines?.length ?? 0} ligne(s)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => go('lines')}
+                className="rounded-xl border border-slate-200 px-3 py-1.5 font-semibold text-emerald-700 hover:bg-emerald-50"
+              >
+                Éditer les lignes →
+              </button>
             </div>
           )}
         </div>
